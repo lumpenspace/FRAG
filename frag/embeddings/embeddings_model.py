@@ -1,30 +1,25 @@
-from typing import List, Protocol
-
+from typing import List
+from pydantic import BaseModel, Field
 import os
-
 import tiktoken
 from openai import OpenAI
 
-class EmbeddingModel(Protocol):
+class EmbeddingModel(BaseModel):
     """
-    A protocol for embedding models.
+    A base class for embedding models.
 
     Attributes:
         dimensions: The dimensionality of the embedding vectors.
         max_tokens: The maximum number of tokens to consider for embedding.
-
-    Methods:
-        tokenize(text: str) -> List[int]: Tokenizes the given text and returns a list of token IDs.
-        embed(text: str) -> List[float]: Returns an embedding vector for the given text.
     """
-    dimensions: int
-    max_tokens: int
+    dimensions: int = Field(..., description="The dimensionality of the embedding vectors")
+    max_tokens: int = Field(..., description="The maximum number of tokens to consider for embedding")
 
     def tokenize(self, text: str) -> List[int]:
-        ...
+        raise NotImplementedError("Subclasses must implement the tokenize method")
 
     def embed(self, text: str) -> List[float]:
-        ...
+        raise NotImplementedError("Subclasses must implement the embed method")
 
 openai_embedding_models = ["text-embedding-ada-002", "text-embedding-large", "text-embedding-small"]
 
@@ -32,30 +27,27 @@ class OpenAiEmbeddingModel(EmbeddingModel):
     """
     A class to interact with OpenAI's embedding models.
 
-    This class initializes with a specific model name and creates an OpenAI object
-    using the API key fetched from environment variables. It provides methods to
-    tokenize and embed text using the specified OpenAI model.
-
     Attributes:
         model_name: The name of the OpenAI embedding model.
-        openai_client: The OpenAI client object initialized with the API key.
+        api_key: The API key for the OpenAI client.
+        tokenizer_name: The name of the tokenizer to use.
     """
-    def __init__(self, model_name: str = "text-embedding-small", tokenizer_name: str = "cl100k_base"):
+    model_name: str = Field("text-embedding-small", description="The name of the OpenAI embedding model")
+    api_key: str = Field(..., description="The API key for the OpenAI client")
+    tokenizer_name: str = Field("cl100k_base", description="The name of the tokenizer to use")
 
-        if not(model_name in openai_embedding_models):
-            raise ValueError(f"Unsupported OpenAI embedding model: {model_name}")
-        
-        api_key = os.getenv("OPENAI_API_KEY")  # API key fetched from environment variable
+    def __init__(self, **data):
+        super().__init__(**data)
 
-        self.dimensions = 1536
-        self.max_tokens = 8191
-        self.model_name = model_name
-        self.openai_client = OpenAI(api_key=api_key)
-        self.tokenizer = tiktoken.get_encoding(tokenizer_name)
-    
+        if self.model_name not in openai_embedding_models:
+            raise ValueError(f"Unsupported OpenAI embedding model: {self.model_name}")
+
+        self.openai_client = OpenAI(api_key=self.api_key)
+        self.tokenizer = tiktoken.get_encoding(self.tokenizer_name)
+
     def tokenize(self, text: str) -> List[int]:
         return self.tokenizer.encode(text)
-    
+
     def embed(self, text: str) -> List[float]:
         try:
             embedding_object = self.openai_client.embeddings.create(input=text, model=self.model_name)
@@ -63,8 +55,5 @@ class OpenAiEmbeddingModel(EmbeddingModel):
             raise ValueError(f"OpenAiEmbeddingsModel: error embedding text: {e}")
 
         embedding_vector = embedding_object.data[0].embedding
-        
-        if len(embedding_vector) != self.dimensions:
-            raise ValueError(f"Expected {self.dimensions} dimensions, got {len(embedding_vector)}")
-        
+
         return embedding_vector
