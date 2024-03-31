@@ -1,4 +1,5 @@
 from datetime import date
+from importlib import metadata
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 import hashlib
 
@@ -35,15 +36,14 @@ class Chunk(BaseModel):
     text: str = Field(..., description="Text of the chunk")
     before: str = Field(..., description="Text before the chunk")
     after: str = Field(..., description="Text after the chunk")
-    tokens: int = Field(..., description="Tokens in the chunk")
     title: str = Field(..., description="Title of the document")
-    extra_metadata: Dict[str, str|int|float|date] = Field(..., description="Extra metadata")
+    extra_metadata: Dict[str, str|int|float|date] = Field({}, description="Extra metadata")
     
 
     @model_validator(mode="before")
     def validate_id(cls, v: Dict[str, Any]) -> Dict[str, Any]:
-        text_hash = hashlib.sha256(v.encode()).hexdigest()
-        v['id'] = f"{v['title']}::{v['part']}:{v['parts']}::{text_hash[:8]}"
+        text_hash = hashlib.sha256(v.get('text').encode('utf-8')).hexdigest()
+        v['id'] = f"{v.get('title')}::{v.get('part')}:{v.get('parts')}::{text_hash[:8]}"
         return v
     
     @property
