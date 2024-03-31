@@ -79,7 +79,7 @@ def test_chunk_text_with_buffers(chunker):
     chunker.settings.buffer_after = 2
     chunks = chunker.chunk_text(text)
     assert len(chunks) == 3
-    assert chunks[0]['text'] starts
+    assert chunks[0]['text'] == "Word1 Word2 Word3 Word4 Word5 Word6 Word7 Word8 Word9 Word10 Word11 Word12 Word13 Word14 Word15 Word16 Word17 Word18 Word19 Word20 Word21 Word22 Word23 Word24 Word25 Word26 Word27 Word28 Word29 Word30 Word31 Word32 Word33 Word34 Word35 Word36 Word37 Word38 Word39 Word40 Word41 Word42 Word43 Word44 Word45 Word46"
     assert chunks[0]['before_buffer'] == ""
     assert chunks[0]['after_buffer'] == "Word47 Word48"
     assert chunks[1]['before_buffer'] == "Word45 Word46"
