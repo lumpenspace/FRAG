@@ -1,19 +1,21 @@
 import os
+import logging
 
 from typing import List, Optional, Type, Optional
 from pydantic import BaseModel, Field, model_validator
 
 from chromadb import ClientAPI, Collection, Client
 
-from ..embeddings_metadata import Chunk, Metadata
-from .source_chunker import SourceChunker, ChunkingSettings, SourceChunk
+from frag.embeddings.embeddings_metadata import Chunk, Metadata
+from frag.embeddings.write.source_chunker import SourceChunker, ChunkingSettings
 from frag.embeddings.embedding_model import EmbeddingModel, OpenAiEmbeddingModel, openai_embedding_models
+
+logger = logging.getLogger(__name__)
 
 class EmbeddingsWriter(BaseModel):
     """
     A class for writing embeddings to a vector db using various models.
     """
-    api_key: str = Field("", description="API key for the embedding model")
     database_path: str = Field("./chroma_db", description="Path to the Chroma database")
     chunking_settings: ChunkingSettings = Field(..., description="Settings for chunking the text")
     chunker: SourceChunker = Field(..., description="Chunker for the embeddings")
@@ -31,16 +33,18 @@ class EmbeddingsWriter(BaseModel):
     @model_validator(mode='before')
     def validate_settings(cls, values):
         settings: ChunkingSettings = values["settings"]
-        embedding_model: EmbeddingModel = values["embedding_model"]
+        embedding_class: EmbeddingModel = values["embedding_model"]
         
-        if settings and embedding_model:
+        if settings and embedding_class:
             if (settings.buffer_before < 0 or settings.buffer_after < 0):
                 raise ValueError(f"buffer_before and buffer_after must be greater than 0")
+            embedding_model = OpenAiEmbeddingModel(embedding_class) if embedding_class is str else EmbeddingModel()
             if hasattr(embedding_model, 'max_tokens'):
                 buffered_max_tokens = embedding_model.max_tokens - (settings.buffer_before + settings.buffer_after)
                 if buffered_max_tokens <= 0:
                     raise ValueError(f"The available tokens must be greater than the sum of buffer_before and buffer_after.\n\nRequired: {settings.buffer_before + settings.buffer_after}, but got: {embedding_model.max_tokens}")
                 values["buffered_max_tokens"] = buffered_max_tokens
+                values["embedding_model"]
         return values
 
     @model_validator(mode='before')
@@ -58,10 +62,10 @@ class EmbeddingsWriter(BaseModel):
         database_path = values.get('database_path')
 
         # check the path's accessibility
-        if database_path and os.path.exists(database_path):
+        if database_path and os.path.exists(database_path) and os.access(database_path, os.W_OK):
             values['chroma_client'] = Client(database_path=database_path)
         else:
-            raise ValueError(f"Database path {database_path} does not exist")
+            raise ValueError(f"Database path {database_path} is not writable or does not exist")
 
         return values
 
@@ -93,7 +97,7 @@ class EmbeddingsWriter(BaseModel):
             self.fetch_and_store_embedding(chunk=chunk)
 
 
-    def fetch_and_store_embedding(self, chunk: Chunk):
+    def fetch_and_store_embedding(self, chunk: Chunk) -> Optional[List[float]]:
         """
         Stores the embedding in a Chroma database and returns it.
 
@@ -109,10 +113,10 @@ class EmbeddingsWriter(BaseModel):
             collection_result = collection.get(ids=chunk.id)
             
             if collection_result and collection_result[0]:
-                print("Embedding found in db")
+                logging.info("Embedding found in db")
                 return collection_result[0]
 
-            print("getting embeddings") 
+            logging.info("getting embeddings") 
             embedding = self.fetch_embedding(chunk.text)
             
             collection.add(
@@ -124,5 +128,28 @@ class EmbeddingsWriter(BaseModel):
 
             return embedding
         except Exception as e:
-            print(f"Error storing embedding: {e}")
+            logging.error(f"Error storing embedding: {e}")
             return None
+
+    def delete_embedding(self, chunk_id: str) -> bool:
+        """
+        Deletes an embedding from the Chroma database based on the chunk ID.
+
+        Parameters:
+            chunk_id: The ID of the chunk whose embedding is to be deleted.
+
+        Returns:
+            A boolean indicating whether the deletion was successful.
+        """
+        try:
+            collection: Collection = self.chroma_client.get_or_create_collection(self.collection_name)
+            delete_result = collection.delete(ids=[chunk_id])
+            if delete_result:
+                logging.info(f"Successfully deleted embedding with ID: {chunk_id}")
+                return True
+            else:
+                logging.warning(f"Failed to delete embedding with ID: {chunk_id}")
+                return False
+        except Exception as e:
+            logging.error(f"Error deleting embedding: {e}")
+            return False
