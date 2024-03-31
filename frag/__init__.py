@@ -1,2 +1,2 @@
 
-from . import embeddings
+from .embeddings import *

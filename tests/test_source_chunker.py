@@ -1,30 +1,31 @@
 import pytest
 
-from typing import List
+from typing import Any, List
 
-from frag.embeddings.source_chunker import SourceChunker, ChunkingSettings
-from frag.embeddings.embeddings_model import EmbeddingModel
+from frag.embeddings.embedding_model import EmbeddingModel
 
-class MockEmbeddingModel(EmbeddingModel):
+class MyEmbeddingModel(EmbeddingModel):
+    max_tokens: int = 50
+    dimensions: int = 100
+
     def tokenize(self, text:str):
         return list(range(len(text.split(' '))))
+
     def embed(self, text: str) -> List[float]:
         return [float(i) for i in range(len(text.split(' ')))]
+
     def decode(self, tokens: List[int]) -> str:
         return ' '.join(['Word{}'.format(i+1) for i in tokens])
+    
+from frag import SourceChunker, ChunkingSettings
 
-from frag.embeddings.embeddings_model import EmbeddingModel
 
 @pytest.fixture
 def chunker():
-    embedding_model = MockEmbeddingModel(dimensions=100, max_tokens=50)
-    settings = ChunkingSettings()
-    return SourceChunker(settings=settings, embedding_model=embedding_model)
+    return SourceChunker(settings=ChunkingSettings(), embedding_model=MyEmbeddingModel())
 
-@pytest.fixture
-def chunker_with_sentences_preserved(chunker):
-    chunker.settings.preserve_sentences = True
-    return chunker
+def chunker_validatable_dict(chunker:SourceChunker, **kwargs):
+    return {"settings": ChunkingSettings(**{**chunker.settings.model_dump().copy(), **kwargs}), "embedding_model": MyEmbeddingModel()}
 
 def test_chunk_text_preserve_paragraphs(chunker):
     text = "Paragraph 1.\n\nParagraph 2."
@@ -71,7 +72,7 @@ def test_chunk_text_mixed_settings(chunker):
     chunker.settings.preserve_sentences = True
     chunks = chunker.chunk_text(text)
     assert len(chunks) == 1  # Expecting 1 chunk, as the text fits within the token limit
-    assert chunks[0]['text'] == "Word1 Word2 Word3 Word4 Word5 Word6 Word1 Word2 Word3 Word4 Word5 Word6"
+    assert chunks[0].text == "Word1 Word2 Word3 Word4 Word5 Word6 Word1 Word2 Word3 Word4 Word5 Word6"
 
 def test_chunk_text_with_buffers(chunker):
     text = "Word1 Word2 Word3 Word4 Word5 Word6 Word7 Word8 Word9 Word10 Word11 Word12" * 10
@@ -79,11 +80,11 @@ def test_chunk_text_with_buffers(chunker):
     chunker.settings.buffer_after = 2
     chunks = chunker.chunk_text(text)
     assert len(chunks) == 3
-    assert chunks[0]['text'] == "Word1 Word2 Word3 Word4 Word5 Word6 Word7 Word8 Word9 Word10 Word11 Word12 Word13 Word14 Word15 Word16 Word17 Word18 Word19 Word20 Word21 Word22 Word23 Word24 Word25 Word26 Word27 Word28 Word29 Word30 Word31 Word32 Word33 Word34 Word35 Word36 Word37 Word38 Word39 Word40 Word41 Word42 Word43 Word44 Word45 Word46"
-    assert chunks[0]['before_buffer'] == ""
-    assert chunks[0]['after_buffer'] == "Word47 Word48"
-    assert chunks[1]['before_buffer'] == "Word45 Word46"
-    assert chunks[1]['after_buffer'] == "Word93 Word94"
+    assert chunks[0].text == "Word1 Word2 Word3 Word4 Word5 Word6 Word7 Word8 Word9 Word10 Word11 Word12 Word13 Word14 Word15 Word16 Word17 Word18 Word19 Word20 Word21 Word22 Word23 Word24 Word25 Word26 Word27 Word28 Word29 Word30 Word31 Word32 Word33 Word34 Word35 Word36 Word37 Word38 Word39 Word40 Word41 Word42 Word43 Word44 Word45 Word46"
+    assert chunks[0].before == ""
+    assert chunks[0].after == "Word47 Word48"
+    assert chunks[1].before == "Word45 Word46"
+    assert chunks[1].after == "Word93 Word94"
 
 def test_chunk_text_with_large_buffers(chunker):
     text = "Word1 Word2 Word3 Word4 Word5"
@@ -91,9 +92,9 @@ def test_chunk_text_with_large_buffers(chunker):
     chunker.settings.buffer_after = 3
     chunks = chunker.chunk_text(text)
     assert len(chunks) == 1
-    assert chunks[0]['text'] == "Word1 Word2 Word3 Word4 Word5"
-    assert chunks[0]['before_buffer'] == ""
-    assert chunks[0]['after_buffer'] == ""
+    assert chunks[0].text == "Word1 Word2 Word3 Word4 Word5"
+    assert chunks[0].before == ""
+    assert chunks[0].after == ""
 
 def test_chunk_text_with_zero_buffers(chunker):
     text = "Word1 Word2 Word3 Word4 Word5"
@@ -101,6 +102,12 @@ def test_chunk_text_with_zero_buffers(chunker):
     chunker.settings.buffer_after = 0
     chunks = chunker.chunk_text(text)
     assert len(chunks) == 1
-    assert chunks[0]['text'] == "Word1 Word2 Word3 Word4 Word5"
-    assert chunks[0]['before_buffer'] == ""
-    assert chunks[0]['after_buffer'] == ""
+    assert chunks[0].text == "Word1 Word2 Word3 Word4 Word5"
+    assert chunks[0].before == ""
+    assert chunks[0].after == ""
+
+def test_validate_settings_passes_with_positive_buffer_and_max_tokens(chunker):
+    try:
+        chunker.validate_settings(chunker_validatable_dict(chunker, settings=ChunkingSettings(max_tokens=50)))
+    except ValueError:
+        pytest.fail("validate_settings() raised ValueError unexpectedly!")

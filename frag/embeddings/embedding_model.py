@@ -40,13 +40,14 @@ class OpenAiEmbeddingModel(EmbeddingModel):
     tokenizer_name: str = Field("cl100k_base", description="The name of the tokenizer to use")
 
     def __init__(self, **data):
-        super().__init__(**data)
 
-        if self.name not in openai_embedding_models:
+        if data["name"] not in openai_embedding_models:
             raise ValueError(f"Unsupported OpenAI embedding model: {self.name}")
 
-        self.openai_client = OpenAI(api_key=self.api_key)
-        self.tokenizer = tiktoken.get_encoding(self.tokenizer_name)
+        data["openai_client"] = OpenAI(api_key=self.api_key)
+        super().__init__(**data)
+        self.tokenizer = tiktoken.model(self.tokenizer_name)
+
 
     def tokenize(self, text: str) -> List[int]:
         return self.tokenizer.encode(text)

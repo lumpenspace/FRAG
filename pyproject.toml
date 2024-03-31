@@ -2,7 +2,7 @@
 name = "frag"
 version = "0.1.0"
 description = ""
-authors = ["lumpenspace <125578322+lumpenspace@users.noreply.github.com>"]
+authors = ["lumpenspace <lumpenspace@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]

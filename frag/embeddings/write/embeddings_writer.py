@@ -1,25 +1,25 @@
 import os
-import hashlib
 
-from typing import List, Type
+from typing import List, Optional, Type, Optional
 from pydantic import BaseModel, Field, model_validator
 
 from chromadb import ClientAPI, Collection, Client
 
-from .embeddings_metadata import ChunkMetadata, Metadata
-from .source_chunker import SourceChunker, ChunkingSettings
-from .embeddings_model import EmbeddingModel, OpenAiEmbeddingModel, openai_embedding_models
+from ..embeddings_metadata import Chunk, Metadata
+from .source_chunker import SourceChunker, ChunkingSettings, SourceChunk
+from frag.embeddings.embedding_model import EmbeddingModel, OpenAiEmbeddingModel, openai_embedding_models
 
-class Embeddings(BaseModel):
+class EmbeddingsWriter(BaseModel):
     """
-    A class for handling embeddings using various models.
+    A class for writing embeddings to a vector db using various models.
     """
     api_key: str = Field("", description="API key for the embedding model")
     database_path: str = Field("./chroma_db", description="Path to the Chroma database")
     chunking_settings: ChunkingSettings = Field(..., description="Settings for chunking the text")
     chunker: SourceChunker = Field(..., description="Chunker for the embeddings")
-    chroma_client: Type[ClientAPI]  = Field(..., description="Chroma client for the database")
+    chroma_client: Type[ClientAPI] = Field(..., description="Chroma client for the database")
     embedding_model: EmbeddingModel = Field(..., description="Embedding model")
+    collection_name: Optional[str] = Field('default_collection', description="Collection name")
 
     @model_validator(mode='before')
     def validate_chunking_settings(cls, values):
@@ -29,19 +29,18 @@ class Embeddings(BaseModel):
         return values
 
     @model_validator(mode='before')
-    def validate_embedding_model(cls, values):
-        embedding_model = values.get('embedding_model')
-        api_key = values.get('api_key')
-
-        if isinstance(embedding_model, str):
-            if embedding_model not in openai_embedding_models:
-                raise ValueError(f"Unsupported embedding model: {embedding_model}")
-            values['embedding_model'] = OpenAiEmbeddingModel(name=embedding_model, api_key=api_key)
-        elif isinstance(embedding_model, EmbeddingModel):
-            values['embedding_model'] = embedding_model
-        else:
-            raise ValueError(f"Unsupported embedding model: {embedding_model}")
-
+    def validate_settings(cls, values):
+        settings: ChunkingSettings = values["settings"]
+        embedding_model: EmbeddingModel = values["embedding_model"]
+        
+        if settings and embedding_model:
+            if (settings.buffer_before < 0 or settings.buffer_after < 0):
+                raise ValueError(f"buffer_before and buffer_after must be greater than 0")
+            if hasattr(embedding_model, 'max_tokens'):
+                buffered_max_tokens = embedding_model.max_tokens - (settings.buffer_before + settings.buffer_after)
+                if buffered_max_tokens <= 0:
+                    raise ValueError(f"The available tokens must be greater than the sum of buffer_before and buffer_after.\n\nRequired: {settings.buffer_before + settings.buffer_after}, but got: {embedding_model.max_tokens}")
+                values["buffered_max_tokens"] = buffered_max_tokens
         return values
 
     @model_validator(mode='before')
@@ -71,7 +70,6 @@ class Embeddings(BaseModel):
         """Returns the name of the embedding model."""
         return self.embedding_model.name
 
-
     def fetch_embedding(self, text: str) -> List[float]:
         """Returns the embedding vector for the given text."""
         return self.embedding_model.embed(text)
@@ -83,44 +81,48 @@ class Embeddings(BaseModel):
         """
         chunks = self.chunker.chunk_text(text)
         parts = len(chunks)
-        for index, chunk in enumerate(chunks):
-            # add a "part" attribute to the metadata
-            chunk_metadata = ChunkMetadata(**metadata.model_dump(), part=index + 1, parts=parts)
-            self.fetch_and_store_embedding(chunk['text'], metadata=chunk_metadata)
+        for index, source_chunk in enumerate(chunks):
+            chunk = Chunk(
+                text=source_chunk.text,
+                before=source_chunk.before, 
+                after=source_chunk.after,
+                part=index + 1,
+                parts=parts,
+                **metadata.model_dump()
+            )
+            self.fetch_and_store_embedding(chunk=chunk)
 
 
-    def fetch_and_store_embedding(self, text: str, metadata: ChunkMetadata):
+    def fetch_and_store_embedding(self, chunk: Chunk):
         """
         Stores the embedding in a Chroma database and returns it.
 
         Parameters:
-            text: The text of the document
-            metadata: The metadata associated with the embedding.
+            chunk: The Chunk object containing text and metadata.
 
         Returns:
             The embedding vector.
         """
         try:
-            collection:Collection = self.chroma_client.get_or_create_collection(metadata.name)
-            # add a hash of the text
-            text_hash = hashlib.sha256(text.encode()).hexdigest()
-            id = metadata.title.lower().replace(" ", "_")+str(metadata.part)+"-"+str(metadata.parts)+"-"+text_hash
+            collection:Collection = self.chroma_client.get_or_create_collection(self.collection_name)
 
-            collection_result = collection.get(ids=id)
+            collection_result = collection.get(ids=chunk.id)
             
             if collection_result and collection_result[0]:
                 print("Embedding found in db")
                 return collection_result[0]
 
-            print("getting embeddings")
-            # Get the embedding for the text
-            embedding = self.fetch_embedding(text)
+            print("getting embeddings") 
+            embedding = self.fetch_embedding(chunk.text)
             
-            # Store the text and its embedding in Chroma
-            collection.add(ids=id, embeddings=embedding, documents=text, metadatas=metadata.model_dump())
+            collection.add(
+                ids=chunk.id,
+                embeddings=embedding,
+                documents=chunk.text,
+                metadatas=chunk.metadata()
+            )
 
             return embedding
         except Exception as e:
             print(f"Error storing embedding: {e}")
-            # Log the error or handle it appropriately
             return None

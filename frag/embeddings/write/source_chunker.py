@@ -1,10 +1,16 @@
 from calendar import c
 import re
+import string
 
 from typing import List
 from pydantic import BaseModel, Field, model_validator
 
-from .embeddings_model import EmbeddingModel
+from frag.embeddings.embedding_model import EmbeddingModel, OpenAiEmbeddingModel
+
+class SourceChunk(BaseModel):
+    text: str = Field(..., description="Text of the chunk")
+    before: str = Field(..., description="Text before the chunk")
+    after: str = Field(..., description="Text after the chunk")
 
 class ChunkingSettings(BaseModel):
     """
@@ -20,18 +26,20 @@ class SourceChunker(BaseModel):
     A class for chunking text into manageable pieces for embedding.
     """
     settings: ChunkingSettings = Field(default_factory=ChunkingSettings, description="The settings for the chunking process")
-    embedding_model: EmbeddingModel
+    embedding_model: EmbeddingModel = Field(..., description="The embedding model to use")
     buffered_max_tokens: int = Field(0, description="Maximum tokens per chunk, adjusted for buffers")
 
     @model_validator(mode='before')
     def validate_settings(cls, values):
-        settings = values.get('settings')
-        embedding_model = values.get('embedding_model')
+        settings: ChunkingSettings = values["settings"]
+        embedding_model: EmbeddingModel = values["embedding_model"]
         if settings and embedding_model:
+            if (settings.buffer_before < 0 or settings.buffer_after < 0):
+                raise ValueError(f"buffer_before and buffer_after must be greater than 0")
             buffered_max_tokens = embedding_model.max_tokens - (settings.buffer_before + settings.buffer_after)
             if buffered_max_tokens <= 0:
                 raise ValueError(f"The available tokens must be greater than the sum of buffer_before and buffer_after.\n\nRequired: {settings.buffer_before + settings.buffer_after}, but got: {embedding_model.max_tokens}")
-            values['buffered_max_tokens'] = buffered_max_tokens
+            values["buffered_max_tokens"] = buffered_max_tokens
         return values
 
 
@@ -65,13 +73,13 @@ class SourceChunker(BaseModel):
         return current_chunk_tokens, chunks
 
     def _create_chunk(self, tokens: List[int], before_buffer: str = '', after_buffer: str = '') -> dict:
-        return {
-            'text': self.embedding_model.decode(tokens),
-            'before_buffer': before_buffer,
-            'after_buffer': after_buffer
-        }
+        return SourceChunk(
+            text=self.embedding_model.decode(tokens),
+            before=before_buffer,
+            after=after_buffer
+        )
 
-    def chunk_text(self, text: str) -> List[dict]:
+    def chunk_text(self, text: str) -> List[SourceChunk]:
         chunks = []
         if text == "":
             return chunks
