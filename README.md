@@ -1,7 +1,6 @@
 ## Hello Visitor
 
 Do you have a decent eval system for RAG-based LLM interfaces? HMU on twitter or discord, same username.
-
 # FRAG: Focused Retrieval-Augmented Generation
 
 FRAG is a novel approach to retrieval-augmented generation that addresses key limitations of existing RAG (Retrieval Augmented Generation) systems. By decoupling the retrieval and generation phases, FRAG enables more flexible, efficient, and context-aware generation from large unstructured knowledge sources.
