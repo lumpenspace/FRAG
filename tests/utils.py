@@ -1,7 +1,9 @@
-from typing import List
+from typing import List, Type
+
 from frag.embeddings.embedding_model import EmbeddingModel
 
-class MyEmbeddingModel(EmbeddingModel):
+class TestEmbeddingModel(EmbeddingModel):
+    name: str = "TestEmbeddingModel"
     max_tokens: int = 50
     dimensions: int = 100
 
@@ -13,4 +15,5 @@ class MyEmbeddingModel(EmbeddingModel):
 
     def decode(self, tokens: List[int]) -> str:
         return ' '.join(['Word{}'.format(i+1) for i in tokens])
-    
+
+

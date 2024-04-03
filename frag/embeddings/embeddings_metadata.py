@@ -1,9 +1,11 @@
+from copy import copy
 from datetime import date
-from importlib import metadata
-from pydantic import BaseModel, ConfigDict, Field, model_validator
-import hashlib
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+from typing import Union
 
 from typing import Any, Dict, Type
+
+from sympy import flatten
 
 class Metadata(BaseModel):
     title: str = Field(..., description="Title of the document")
@@ -17,6 +19,7 @@ class Metadata(BaseModel):
         }
     )
 
+
     @staticmethod
     def schema_extra(schema: Dict[str, Any], model: Type['Metadata']) -> None:
         if model.config_dict.json_schema_extra.get("remove_titles", False):
@@ -28,32 +31,28 @@ class Metadata(BaseModel):
                 if prop['type'] not in allowed_types:
                     raise ValueError("Only string or number fields are allowed.")
 
-
-class Chunk(BaseModel):
+class ChunkMetadata(Metadata):
     part: int = Field(..., description="Part of the document")
     parts: int = Field(..., description="Total parts of the document")
-    id: str = Field(..., description="Unique identifier for the chunk")
-    text: str = Field(..., description="Text of the chunk")
     before: str = Field(..., description="Text before the chunk")
     after: str = Field(..., description="Text after the chunk")
-    title: str = Field(..., description="Title of the document")
-    extra_metadata: Dict[str, str|int|float|date] = Field({}, description="Extra metadata")
-    
+    extra_metadata: Dict[str, Union[str, int, float, date]] = Field({}, description="Extra metadata")
 
-    @model_validator(mode="before")
-    def validate_id(cls, v: Dict[str, Any]) -> Dict[str, Any]:
-        text_hash = hashlib.sha256(v.get('text').encode('utf-8')).hexdigest()
-        v['id'] = f"{v.get('title')}::{v.get('part')}:{v.get('parts')}::{text_hash[:8]}"
+    @field_validator('extra_metadata', mode="after")
+    def flatten_extra_metadata(cls, v):
+        if isinstance(v, dict):
+            return flatten(v)
         return v
+
+    def dict(self, *args, **kwargs):
+        data = super().dict(*args, **kwargs)
+        data['extra_metadata'] = flatten(data['extra_metadata'])
+        return data
+
+    @classmethod
+    def parse_obj(cls, data: Any):
+        extra_metadata = data.get('extra_metadata', {})
+        if isinstance(extra_metadata, dict):
+            data += {k: v for k, v in extra_metadata.items()}
+        return super().model_dump(data)
     
-    @property
-    def metadata(self) -> Metadata:
-        return Metadata(
-            **self.extra_metadata,
-            title=self.title,
-            part=self.part,
-            parts=self.parts,
-            tokens=self.tokens,
-            before=self.before,
-            after=self.after
-        )

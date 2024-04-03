@@ -5,12 +5,8 @@ import string
 from typing import List
 from pydantic import BaseModel, Field, model_validator
 
-from frag.embeddings.embedding_model import EmbeddingModel, OpenAiEmbeddingModel
-
-class SourceChunk(BaseModel):
-    text: str = Field(..., description="Text of the chunk")
-    before: str = Field(..., description="Text before the chunk")
-    after: str = Field(..., description="Text after the chunk")
+from frag.embeddings.source_chunk import SourceChunk
+from frag.embeddings.embedding_model import EmbeddingModel
 
 class ChunkingSettings(BaseModel):
     """
