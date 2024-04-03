@@ -2,7 +2,7 @@ from typing import List, Type
 
 from frag.embeddings.embedding_model import EmbeddingModel
 
-class TestEmbeddingModel(EmbeddingModel):
+class EmbeddingModelTest(EmbeddingModel):
     name: str = "TestEmbeddingModel"
     max_tokens: int = 50
     dimensions: int = 100

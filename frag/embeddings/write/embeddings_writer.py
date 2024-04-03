@@ -123,12 +123,11 @@ class EmbeddingsWriter(BaseModel):
 
             logging.info("getting embeddings") 
             embedding = self.fetch_embedding(chunk.text)
-            print("#########", chunk.metadata.model_dump())
             self.chroma_collection.add(
                 ids=chunk.id,
                 embeddings=embedding,
                 documents=chunk.text,
-                metadatas=chunk.metadata.model_dump()
+                metadatas=chunk.metadata.model_dump(exclude_none=True)  # Use the serialized metadata with None values excluded
             )
 
             return embedding

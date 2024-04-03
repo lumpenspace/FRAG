@@ -14,6 +14,7 @@ pandas = "^2.2.1"
 openai = "^1.14.3"
 pytest = "^8.1.1"
 pytest-mock = "^3.14.0"
+flatten-dict = "^0.4.2"
 
 [build-system]
 requires = ["poetry-core"]

@@ -3,15 +3,15 @@ import pytest
 from typing import Any, List
 
 from frag import ChunkingSettings
-from .utils import TestEmbeddingModel
+from .utils import EmbeddingModelTest
 from frag.embeddings.write.source_chunker import SourceChunker, ChunkingSettings
 
 @pytest.fixture
 def chunker():
-    return SourceChunker(settings=ChunkingSettings(), embedding_model=TestEmbeddingModel())
+    return SourceChunker(settings=ChunkingSettings(), embedding_model=EmbeddingModelTest())
 
 def chunker_validatable_dict(chunker:SourceChunker, **kwargs):
-    return {"settings": ChunkingSettings(**{**chunker.settings.model_dump().copy(), **kwargs}), "embedding_model": TestEmbeddingModel()}
+    return {"settings": ChunkingSettings(**{**chunker.settings.model_dump().copy(), **kwargs}), "embedding_model": EmbeddingModelTest()}
 
 def test_chunk_text_preserve_paragraphs(chunker):
     text = "Paragraph 1.\n\nParagraph 2."

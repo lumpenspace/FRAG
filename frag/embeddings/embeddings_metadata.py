@@ -1,14 +1,18 @@
 from copy import copy
 from datetime import date
+from flatten_dict import flatten_dict
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-from typing import Union
+from typing import Union, Optional
 
 from typing import Any, Dict, Type
 
-from sympy import flatten
+from datetime import datetime
 
 class Metadata(BaseModel):
     title: str = Field(..., description="Title of the document")
+    url: Optional[str] = Field(None, description="URL of the document")
+    author: str = Field(None, description="Author of the document")
+    publish_date: Optional[datetime] = Field(None, description="Publish date of the document")
 
     model_config = ConfigDict(
         extra="allow",
@@ -38,15 +42,31 @@ class ChunkMetadata(Metadata):
     after: str = Field(..., description="Text after the chunk")
     extra_metadata: Dict[str, Union[str, int, float, date]] = Field({}, description="Extra metadata")
 
+    def combine_with_document_metadata(self, document_metadata: Metadata):
+        # Combine chunk-specific metadata with document-level metadata for database saving
+        combined_metadata = {
+            **self.model_dump(exclude=self.model_dump().keys()),
+            **document_metadata.model_dump(exclude=self.model_dump().keys())
+        }
+        return combined_metadata
+
+    @classmethod
+    def separate_from_combined_metadata(cls, combined_metadata: Dict[str, Any]):
+        # Separate combined metadata back into document-level and chunk-specific metadata when reading from the database
+        document_metadata_keys = Metadata.__fields__.keys()
+        document_metadata = {key: combined_metadata[key] for key in document_metadata_keys if key in combined_metadata}
+        chunk_metadata = {key: combined_metadata[key] for key in combined_metadata if key not in document_metadata_keys}
+        return cls(**chunk_metadata), Metadata(**document_metadata)
+
     @field_validator('extra_metadata', mode="after")
     def flatten_extra_metadata(cls, v):
         if isinstance(v, dict):
-            return flatten(v)
+            return flatten_dict(v)
         return v
 
     def dict(self, *args, **kwargs):
-        data = super().dict(*args, **kwargs)
-        data['extra_metadata'] = flatten(data['extra_metadata'])
+        data = super().model_dump()(*args, **kwargs)
+        data['extra_metadata'] = flatten_dict()(data['extra_metadata'])
         return data
 
     @classmethod
