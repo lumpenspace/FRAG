@@ -1,6 +1,17 @@
-from calendar import c
+"""
+This module contains the `SourceChunker` class, which is responsible for
+breaking down text into manageable chunks for embedding.
+
+It leverages settings defined in `ChunkingSettings` to customize the
+chunking process, such as preserving paragraphs or sentences, and setting buffer
+sizes before and after chunks. The class also validates these settings against
+the capabilities of the specified embedding model to ensure effective chunking.
+
+Additionally, it provides methods for splitting text into chunks and adding
+buffer content around chunks for context preservation.
+"""
+
 import re
-import string
 
 from typing import List
 from pydantic import BaseModel, Field, model_validator
@@ -10,7 +21,7 @@ from frag.embeddings.embedding_model import EmbeddingModel
 
 class ChunkingSettings(BaseModel):
     """
-    Settings for the embedding process.
+    Settings for the chunking process.
     """
     preserve_paragraphs: bool = Field(False, description="Whether to preserve paragraphs in the embedding process")
     preserve_sentences: bool = Field(True, description="Whether to preserve sentences in the embedding process")
@@ -76,6 +87,10 @@ class SourceChunker(BaseModel):
         )
 
     def chunk_text(self, text: str) -> List[SourceChunk]:
+        """
+        Breaks down the given text into chunks based on the chunking 
+        settings and embedding model's capabilities.
+        """
         chunks = []
         if text == "":
             return chunks

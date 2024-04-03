@@ -4,7 +4,6 @@ import hashlib
 
 from frag.embeddings.embeddings_metadata import ChunkMetadata
 from frag.embeddings.write.source_chunker import SourceChunk
-
 from frag.embeddings.embeddings_metadata import Metadata
 
 class Chunk(BaseModel):

@@ -1,4 +1,3 @@
-from copy import copy
 from datetime import date
 from flatten_dict import flatten_dict
 from pydantic import BaseModel, ConfigDict, Field, field_validator

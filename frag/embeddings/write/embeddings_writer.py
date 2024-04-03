@@ -1,3 +1,14 @@
+"""
+This module contains the `EmbeddingsWriter` class, which is responsible for
+writing embeddings to a vector database using various models.
+
+It handles the creation, storage, and management of embeddings,
+leveraging the Chroma database for persistence.
+
+The class also provides functionality for chunking text documents,
+fetching embeddings from models, and updating or deleting embeddings in the database.
+"""
+
 import os
 import logging
 import chromadb

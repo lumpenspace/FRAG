@@ -1,8 +1,18 @@
+"""
+This module defines the base and OpenAI-specific embedding model classes.
+
+The `EmbeddingModel` class serves as a base for creating embedding models with
+methods for tokenization, embedding, and decoding.
+
+The `OpenAiEmbeddingModel` class extends this base class to interact with OpenAI's
+embedding models, providing implementations for the base class's abstract methods
+using OpenAI's API and a specified tokenizer.
+"""
+
 from typing import List
 from pydantic import BaseModel, Field
-import os
-import tiktoken
 from openai import OpenAI
+import tiktoken
 
 class EmbeddingModel(BaseModel):
     """
