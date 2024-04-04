@@ -1,6 +1,3 @@
-## Hello Visitor
-
-Do you have a decent eval system for RAG-based LLM interfaces? HMU on twitter or discord, same username.
 # FRAG: Focused Retrieval-Augmented Generation
 
 FRAG is a novel approach to retrieval-augmented generation that addresses key limitations of existing RAG (Retrieval Augmented Generation) systems. By decoupling the retrieval and generation phases, FRAG enables more flexible, efficient, and context-aware generation from large unstructured knowledge sources.
@@ -36,22 +33,22 @@ Flow:
 4. Feed summaries to Interface Model for context-aware generation
 5. Generate final response
 
-```mermaid
-graph TD
-    A[User Input] --> |Last question| E[context]
-    B[Vector DB] --> |N closest fragments| C[Archivist 1]
-    B --> |N closest fragments| D[Archivist 2]
-    B --> |N closest fragments| F[Archivist N]
-    
-    C --> |Relevant summary| G[Merged summary]
-    D --> |Relevant summary| G
-    F --> |Relevant summary| G
-    
-    A --> E[Context]
-    E --> |Previous interaction| B
-    E --> H[Interface Model]
-    G --> H
-```
+<div class="mermaid">
+   graph TD
+      A[User Input] --> |Last question| E[context]
+      B[Vector DB] --> |N closest fragments| C[Archivist 1]
+      B --> |N closest fragments| D[Archivist 2]
+      B --> |N closest fragments| F[Archivist N]
+      
+      C --> |Relevant summary| G[Merged summary]
+      D --> |Relevant summary| G
+      F --> |Relevant summary| G
+      
+      A --> E[Context]
+      E --> |Previous interaction| B
+      E --> H[Interface Model]
+      G --> H
+</div>
 
 ### Architecture
 
