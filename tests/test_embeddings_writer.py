@@ -6,14 +6,14 @@ from frag.embeddings.Chunk import Chunk
 from frag.embeddings.embeddings_metadata import Metadata
 from frag.embeddings.write.embeddings_writer import EmbeddingsWriter
 from frag.embeddings.write.source_chunker import ChunkingSettings
-from .utils import EmbeddingModelTest
+from .utils import EmbedAPITest
 
 @pytest.fixture
 def embeddings_writer(tmpdir):
     return EmbeddingsWriter(
         database_path=str(tmpdir.join("test_db")),
         chunking_settings=ChunkingSettings(),
-        embeddings_source=EmbeddingModelTest,
+        embeddings_source=EmbedAPITest,
         collection_name = f"test_collection_{uuid.uuid4()}"
     )
 

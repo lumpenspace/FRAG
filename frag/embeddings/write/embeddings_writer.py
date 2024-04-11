@@ -12,95 +12,27 @@ fetching embeddings from models, and updating or deleting embeddings in the data
 import os
 import logging
 import chromadb
-from datetime import date
-from typing import List, Annotated, Type
+from typing import List, Type
 
-from pydantic import BaseModel, Field, computed_field, model_validator
+from pydantic import Field, computed_field, model_validator
 
-import chromadb
-from regex import P
+from frag.embeddings.embed_api import EmbedAPI
 
-from frag.embeddings.embedding_model import EmbeddingModel, OpenAiEmbeddingModel
-
+from frag.embeddings.embedding_store import EmbeddingStore
 from frag.embeddings.source_chunk import SourceChunk
 from frag.embeddings.Chunk import Chunk
-from frag.embeddings.embeddings_metadata import ChunkMetadata, Metadata
+from frag.embeddings.embeddings_metadata import Metadata
 
-from .source_chunker import ChunkingSettings, SourceChunker
+from .source_chunker import SourceChunker
 
 logger = logging.getLogger(__name__)
-class EmbeddingsWriter(BaseModel):
+class EmbeddingsWriter(EmbeddingStore):
     """
     A class for writing embeddings to a vector db using various models.
     """
-    database_path: Annotated[str, Field(os.path.join(os.path.dirname(__file__), "chroma_db"), description="Path to the Chroma database")]
     chunker: SourceChunker = Field(..., description="Chunker for the embeddings")
-    embeddings_source: Type[EmbeddingModel]|str = Field(..., description="Embedding Source")
-    chroma_collection: chromadb.Collection = Field(..., description="Chroma client for the database")
-    embedding_model: EmbeddingModel = Field(..., description="Embedding model")
-
-    @model_validator(mode='before')
-    def validate_settings(cls, values):
-        embeddings_source = values["embeddings_source"]
-        settings: ChunkingSettings = values.get('chunking_settings')
-
-        if settings and embeddings_source:
-            if (settings.buffer_before < 0 or settings.buffer_after < 0):
-                raise ValueError(f"buffer_before and buffer_after must be greater than 0")
-            if isinstance(embeddings_source, str):
-                embedding_model = OpenAiEmbeddingModel(embeddings_source)
-            else:
-                embedding_model = embeddings_source()
-
-            if not hasattr(embedding_model, 'max_tokens'):
-                raise ValueError(f"Embedding model {embeddings_source} does not have a max_tokens attribute")
-
-            buffered_max_tokens = embedding_model.max_tokens - (settings.buffer_before + settings.buffer_after)
-            if buffered_max_tokens <= 0:
-                raise ValueError(f"The available tokens must be greater than the sum of buffer_before and buffer_after.\n\nRequired: {settings.buffer_before + settings.buffer_after}, but got: {embedding_model.max_tokens}")
-            chunker = SourceChunker(settings=settings, embedding_model=embedding_model)
-            values = {
-                **values,
-                "buffered_max_tokens": buffered_max_tokens,
-                "embedding_model": embedding_model,
-                "chunker": chunker
-            }
-            return values
-        else:
-            raise ValueError("Embedding model and chunking settings must be provided")
-
-    @model_validator(mode='before')
-    def validate_chroma_client(cls, values):
-        database_path: str = values.get('database_path')
-        collection_name: str = values.get('collection_name')
-        if not collection_name:
-            collection_name = 'default_collection'
-            logging.warning(f"Collection name not provided, using default collection name: {collection_name}")
-        if not os.path.exists(database_path):
-            os.makedirs(database_path, exist_ok=True)
-        if not os.access(database_path, os.W_OK):
-            raise ValueError(f"Database path {database_path} is not writable")
-        try:
-            client = chromadb.PersistentClient(path=database_path)
-        except Exception as e:
-            logger.error(f"Error creating chromadb client: {e}")
-            raise e
-        try:
-            collection = client.get_or_create_collection(collection_name)
-        except Exception as e:
-            logger.error(f"Error creating chromadb collection: {e}")
-            raise e
-        values['chroma_collection'] = collection  # Assign the collection instead of validating it as a dictionary
-        return values          
-      
-    @computed_field
-    def name(self) -> str:
-        """Returns the name of the embedding model."""
-        return self.embedding_model.name
-
-    def fetch_embedding(self, text: str) -> List[float]:
-        """Returns the embedding vector for the given text."""
-        return self.embedding_model.embed(text)
+    embeddings_source: Type[EmbedAPI]|str = Field(..., description="Embedding Source")
+    embedding_model: EmbedAPI = Field(..., description="Embedding API client. Create one with `$ frag api name` or use `$ frag api help`")
             
 
     def create_embeddings_for_document(self, text: str, metadata: Metadata):
@@ -115,6 +47,7 @@ class EmbeddingsWriter(BaseModel):
             chunks.append(chunk)
 
         return chunks
+
     def fetch_and_store_embedding(self, chunk: SourceChunk) -> List[float]:
         """
         Stores the embedding in a Chroma database and returns it.
@@ -145,15 +78,14 @@ class EmbeddingsWriter(BaseModel):
         except Exception as e:
             raise e
 
-
             
     def update_metadata(self, chunk_id: str, metadata: Metadata) -> bool:
         """
         Updates the metadata for an embedding in the Chroma database.
         """
         # if the current metadata has a different schema, throw an error.
-        result = self.chroma_collection.get(ids=chunk_id)[0]
-        if not metadata.model_validate(result.metadata):
+        result = self.chroma_collection.get(ids=['chunk_id']).get(chunk_id)
+        if result.metadata and not metadata.model_validate(result.metadata):
             raise ValueError(f"The metadata schema is different from the current metadata schema")
         self.chroma_collection.update(ids=chunk_id, metadatas=metadata.model_dump())
         return True

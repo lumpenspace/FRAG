@@ -17,7 +17,7 @@ from typing import List
 from pydantic import BaseModel, Field, model_validator
 
 from frag.embeddings.source_chunk import SourceChunk
-from frag.embeddings.embedding_model import EmbeddingModel
+from frag.embeddings.embed_api import EmbedAPI
 
 class ChunkingSettings(BaseModel):
     """
@@ -33,21 +33,25 @@ class SourceChunker(BaseModel):
     A class for chunking text into manageable pieces for embedding.
     """
     settings: ChunkingSettings = Field(default_factory=ChunkingSettings, description="The settings for the chunking process")
-    embedding_model: EmbeddingModel = Field(..., description="The embedding model to use")
+    embedding_model: EmbedAPI = Field(..., description="The embedding model to use")
     buffered_max_tokens: int = Field(0, description="Maximum tokens per chunk, adjusted for buffers")
 
     @model_validator(mode='before')
-    def validate_settings(cls, values):
-        settings: ChunkingSettings = values["settings"]
-        embedding_model: EmbeddingModel = values["embedding_model"]
+    def validate_settings(cls, values: dict):
+        settings: ChunkingSettings = values.get("settings")
+        embedding_model: EmbedAPI = values.get("embedding_model")
         if settings and embedding_model:
             if (settings.buffer_before < 0 or settings.buffer_after < 0):
                 raise ValueError(f"buffer_before and buffer_after must be greater than 0")
             buffered_max_tokens = embedding_model.max_tokens - (settings.buffer_before + settings.buffer_after)
             if buffered_max_tokens <= 0:
                 raise ValueError(f"The available tokens must be greater than the sum of buffer_before and buffer_after.\n\nRequired: {settings.buffer_before + settings.buffer_after}, but got: {embedding_model.max_tokens}")
-            values["buffered_max_tokens"] = buffered_max_tokens
-        return values
+        return {
+            **values,
+            "buffered_max_tokens": buffered_max_tokens,
+            "settings": settings,
+            "embedding_model": embedding_model
+        }
 
 
     def _split_text_into_chunks(self, text: str) -> List[List[int]]:

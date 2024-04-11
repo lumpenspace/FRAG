@@ -1,10 +1,10 @@
 from typing import List, Type
 
-from frag.embeddings.embedding_model import EmbeddingModel
+from frag.embeddings.embed_api import EmbedAPI
 
-class EmbeddingModelTest(EmbeddingModel):
+class EmbedAPITest(EmbedAPI):
     __test__ = False
-    name: str = "TestEmbeddingModel"
+    name: str = "TestEmbedAPI"
     max_tokens: int = 50
     dimensions: int = 100
 
