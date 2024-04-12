@@ -11,9 +11,8 @@ fetching embeddings from models, and updating or deleting embeddings in the data
 
 import logging
 from typing import List
-from openai import BaseModel
 
-from pydantic import  Field
+from pydantic import BaseModel, Field
 
 from frag.embeddings.embedding_store import EmbeddingStore
 from frag.embeddings.Chunk import SourceChunk
@@ -29,6 +28,23 @@ class EmbeddingsWriter(BaseModel):
     chunker: SourceChunker = Field(default=None)
 
     def create_embeddings_for_document(self, text: str, metadata: Metadata):
+        """
+        Creates embeddings for a given document and stores them in the database.
+
+        Parameters:
+            text (str): The text of the document to create embeddings for.
+            metadata (Metadata): Metadata associated with the document.
+
+        Returns:
+            A list of Chunk objects representing the embedded chunks of the document.
+
+        Example:
+            >>> writer = EmbeddingsWriter(store=embedding_store, chunker=source_chunker)
+            >>> metadata = Metadata(title="Sample Document", parts=3)
+            >>> chunks = writer.create_embeddings_for_document("This is a sample document.", metadata)
+            >>> for chunk in chunks:
+            ...     print(chunk.id)
+        """
         chunks = []
         source_chunks = self.store.chunker.chunk_text(text)
         metadata.parts = len(source_chunks)
@@ -49,6 +65,18 @@ class EmbeddingsWriter(BaseModel):
 
         Returns:
             The embedding vector.
+
+        Raises:
+            ConnectionError: If there is an issue connecting to the database.
+            ValueError: If the embedding cannot be fetched or stored.
+
+        Example:
+            >>> writer = EmbeddingsWriter(store=embedding_store, chunker=source_chunker)
+            >>> metadata = Metadata(title="Sample Document", parts=1)
+            >>> source_chunk = SourceChunk(text="This is a sample document.")
+            >>> chunk = Chunk.from_source_chunk(source_chunk=source_chunk, metadata=metadata, part=1)
+            >>> embedding = writer.fetch_and_store_embedding(chunk)
+            >>> print(embedding)
         """
         try:
             collection_result = self.store.get(ids=[chunk.id])
@@ -66,6 +94,10 @@ class EmbeddingsWriter(BaseModel):
                 metadatas=chunk.metadata.model_dump(exclude_none=True)  # Use the serialized metadata with None values excluded
             )
             return embedding
+        except ConnectionError as e:
+            logger.error(f"Failed to connect to the database: {e}")
+            raise ConnectionError("Failed to connect to the database") from e
         except Exception as e:
-            raise e
+            logger.error(f"Unexpected error fetching or storing embedding: {e}")
+            raise ValueError("Unexpected error fetching or storing embedding") from e
         

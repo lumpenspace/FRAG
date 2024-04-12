@@ -5,12 +5,43 @@ from pydantic import BaseModel, Field, model_validator, computed_field
 from typing import List, Type
 
 from frag.embeddings.embeddings_metadata import Metadata
-from frag.embeddings.embed_api import  OpenAIEmbedAPI, EmbedAPI
+from frag.embeddings.apis.openai_embed_api import  OpenAIEmbedAPI, EmbedAPI
 from frag.embeddings.write.source_chunker import SourceChunker, ChunkingSettings
 
 logger = logging.getLogger(__name__)
 
+"""
+This module defines the EmbeddingStore class, which is responsible for storing and managing embeddings in a Chroma database.
+It utilizes Pydantic for data validation and Chroma for database interactions. The EmbeddingStore class provides functionality
+to validate embedding sources, manage Chroma client and collection instances, and perform operations such as fetching, updating,
+and deleting embeddings.
+"""
+
 class EmbeddingStore(BaseModel):
+    """
+    A class for storing and managing embeddings in a Chroma database.
+
+    Attributes:
+        path (str): Path to the Chroma database.
+        collection_name (str): Name of the collection within the Chroma database.
+        collection (chromadb.Collection): Chroma client for the database.
+        chunker (SourceChunker): Chunker for the embeddings.
+        embeddings_api (Type[EmbedAPI]|str): Embedding Source.
+        chunking_settings (ChunkingSettings): Chunking settings.
+        embedding_model (EmbedAPI): The embedding model used for generating embeddings.
+
+    Methods:
+        validate_embedding_source: Validates the embedding source and chunking settings.
+        validate_chroma_client: Validates and initializes the Chroma client and collection.
+        name: Returns the name of the embedding model.
+        chroma_collection: Returns the Chroma collection instance.
+        add: Shortcut method to add an item to the Chroma collection.
+        get: Shortcut method to get an item from the Chroma collection.
+        query: Shortcut method to query the Chroma collection.
+        fetch: Returns the embedding vector for the given text.
+        update_metadata: Updates the metadata for an embedding in the Chroma database.
+        delete_embedding: Deletes an embedding from the Chroma database based on the chunk ID.
+    """
     path: str = Field(os.path.join(os.path.dirname(__file__), "chroma_db"), description="Path to the Chroma database")
     collection_name: str = Field(default="default_collection", description="Name of the collection")
     collection: chromadb.Collection = Field(..., description="Chroma client for the database")

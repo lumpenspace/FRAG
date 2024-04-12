@@ -1,6 +1,6 @@
-from typing import List, Type
+from typing import List
 
-from frag.embeddings.embed_api import EmbedAPI
+from frag.embeddings.apis.base_embed_api import EmbedAPI
 
 class EmbedAPITest(EmbedAPI):
     __test__ = False

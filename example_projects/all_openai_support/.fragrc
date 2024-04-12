@@ -1,0 +1,16 @@
+
+
+{
+  "db": {
+    "path": "./db"
+  } ,
+  "chunker": {
+    "preserve_paragraphs": true,
+    "buffer_before": 10,
+    "buffer_after": 10
+  },
+  "embeddings": {
+    "model": "text-embedding-3-large"
+  }
+}
+

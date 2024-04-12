@@ -17,7 +17,7 @@ from typing import List
 from pydantic import BaseModel, Field, model_validator
 
 from frag.embeddings.Chunk import SourceChunk
-from frag.embeddings.embed_api import EmbedAPI
+from frag.embeddings.apis.openai_embed_api import EmbedAPI
 
 class ChunkingSettings(BaseModel):
     """
