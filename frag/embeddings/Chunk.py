@@ -2,9 +2,14 @@ from curses import meta
 from pydantic import BaseModel, Field
 import hashlib
 
-from frag.embeddings.embeddings_metadata import ChunkMetadata
-from frag.embeddings.write.source_chunker import SourceChunk
 from frag.embeddings.embeddings_metadata import Metadata
+
+from pydantic import BaseModel, Field
+
+class SourceChunk(BaseModel):
+    text: str = Field(..., description="Text of the chunk")
+    before: str = Field(..., description="Text before the chunk")
+    after: str = Field(..., description="Text after the chunk")
 
 class Chunk(BaseModel):
     text: str = Field(..., description="Text of the chunk")
