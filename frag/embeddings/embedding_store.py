@@ -11,32 +11,32 @@ from frag.embeddings.write.source_chunker import SourceChunker, ChunkingSettings
 logger = logging.getLogger(__name__)
 
 class EmbeddingStore(BaseModel):
-    database_path: str = Field(os.path.join(os.path.dirname(__file__), "chroma_db"), description="Path to the Chroma database")
+    path: str = Field(os.path.join(os.path.dirname(__file__), "chroma_db"), description="Path to the Chroma database")
     collection_name: str = Field(default="default_collection", description="Name of the collection")
     collection: chromadb.Collection = Field(..., description="Chroma client for the database")
     chunker: SourceChunker = Field(..., description="Chunker for the embeddings")
-    embeddings_source: Type[EmbedAPI]|str = Field(..., description="Embedding Source")
+    embeddings_api: Type[EmbedAPI]|str = Field(..., description="Embedding Source")
     chunking_settings: ChunkingSettings = Field(..., description="Chunking settings")
     embedding_model: EmbedAPI 
 
     @model_validator(mode='before')
     @classmethod
     def validate_embedding_source(cls, values):
-        if "embeddings_source" not in values or "chunking_settings" not in values:
-            missing_keys = [key for key in ["embeddings_source", "chunking_settings"] if key not in values]
+        if "embeddings_api" not in values or "chunking_settings" not in values:
+            missing_keys = [key for key in ["embeddings_api", "chunking_settings"] if key not in values]
             raise ValueError(f"Missing required parameters: {', '.join(missing_keys)}")
-        embeddings_source = values["embeddings_source"]
+        embeddings_api = values["embeddings_api"]
         settings: ChunkingSettings = values['chunking_settings']
-        if settings and embeddings_source:
+        if settings and embeddings_api:
             if (settings.buffer_before < 0 or settings.buffer_after < 0):
                 raise ValueError(f"buffer_before and buffer_after must be greater than 0")
-            if isinstance(embeddings_source, str):
-                embedding_model = OpenAIEmbedAPI(embeddings_source)
+            if isinstance(embeddings_api, str):
+                embedding_model = OpenAIEmbedAPI(embeddings_api)
             else:
-                embedding_model = embeddings_source()
+                embedding_model = embeddings_api()
 
             if not hasattr(embedding_model, 'max_tokens'):
-                raise ValueError(f"Embedding model {embeddings_source} does not have a max_tokens attribute")
+                raise ValueError(f"Embedding model {embeddings_api} does not have a max_tokens attribute")
 
             buffered_max_tokens = embedding_model.max_tokens - (settings.buffer_before + settings.buffer_after)
             if buffered_max_tokens <= 0:
@@ -56,18 +56,18 @@ class EmbeddingStore(BaseModel):
     @model_validator(mode='before')
     @classmethod
     def validate_chroma_client(cls, values: dict):
-        database_path: str = values.get('database_path') 
+        path: str = values.get('path') 
         collection_name: str = values.get('collection_name')
 
         if not collection_name:
             collection_name = 'default_collection'
             logging.warning(f"Collection name not provided, using default collection name: {collection_name}")
-        if not os.path.exists(database_path):
-            os.makedirs(database_path, exist_ok=True)
-        if not os.access(database_path, os.W_OK):
-            raise ValueError(f"Database path {database_path} is not writable")
+        if not os.path.exists(path):
+            os.makedirs(path, exist_ok=True)
+        if not os.access(path, os.W_OK):
+            raise ValueError(f"Database path {path} is not writable")
         try:
-            client = chromadb.PersistentClient(path=database_path)
+            client = chromadb.PersistentClient(path=path)
         except Exception as e:
             logger.error(f"Error creating chromadb client: {e}")
             raise e
@@ -91,12 +91,12 @@ class EmbeddingStore(BaseModel):
 
     @property
     def chroma_collection(self):
-        if not os.path.exists(self.database_path):
-            os.makedirs(self.database_path, exist_ok=True)
-        if not os.access(self.database_path, os.W_OK):
-            raise ValueError(f"Database path {self.database_path} is not writable")
+        if not os.path.exists(self.path):
+            os.makedirs(self.path, exist_ok=True)
+        if not os.access(self.path, os.W_OK):
+            raise ValueError(f"Database path {self.path} is not writable")
         try:
-            client = chromadb.PersistentClient(path=self.database_path)
+            client = chromadb.PersistentClient(path=self.path)
             collection = client.get_or_create_collection(self.collection_name)
             return collection
         except Exception as e:
@@ -110,7 +110,10 @@ class EmbeddingStore(BaseModel):
     @property
     def get(self):
         return self.collection.get
-
+    
+    @property
+    def query(self):
+        return self.collection.query
 
     def fetch(self, text: str) -> List[float]:
         """Returns the embedding vector for the given text."""

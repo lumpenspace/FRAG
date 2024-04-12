@@ -12,9 +12,9 @@ from tests.utils import EmbedAPITest
 @pytest.fixture
 def embeddings_writer(tmpdir):
     store = EmbeddingStore(
-        database_path=str(tmpdir.join("test_db")),
+        path=str(tmpdir.join("test_db")),
         chunking_settings=ChunkingSettings(),
-        embeddings_source=EmbedAPITest,
+        embeddings_api=EmbedAPITest,
         collection_name = f"test_collection_{uuid.uuid4()}"  
     )
     return EmbeddingsWriter(store=store)

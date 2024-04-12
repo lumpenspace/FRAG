@@ -1,2 +1,2 @@
-from frag.embeddings.read import EmbeddingsReader
+from .embeddings_reader import EmbeddingsReader
 

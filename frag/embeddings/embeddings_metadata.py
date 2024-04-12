@@ -22,6 +22,12 @@ class Metadata(BaseModel):
         }
     )
 
+    def to_dict(self):
+        return self.model_dump()
+    
+    def to_json(self):
+        return self.model_dump_json()
+    
 
     @staticmethod
     def schema_extra(schema: Dict[str, Any], model: Type['Metadata']) -> None:

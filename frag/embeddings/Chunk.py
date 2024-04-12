@@ -1,10 +1,9 @@
 from curses import meta
 from pydantic import BaseModel, Field
+
 import hashlib
 
 from frag.embeddings.embeddings_metadata import Metadata
-
-from pydantic import BaseModel, Field
 
 class SourceChunk(BaseModel):
     text: str = Field(..., description="Text of the chunk")
@@ -31,4 +30,3 @@ class Chunk(BaseModel):
             metadata=metadata,
             id=Chunk.make_id(text=source_chunk.text, metadata=metadata, part=part)
         )
-
