@@ -5,7 +5,7 @@ from frag.embeddings.embedding_store import EmbeddingStore
 
 from frag.embeddings.embeddings_metadata import Metadata
 from frag.embeddings.write.embeddings_writer import EmbeddingsWriter
-from frag.embeddings.write.source_chunker import ChunkingSettings
+from frag.embeddings.write.source_chunker import ChunkSettings
 
 from tests.utils import EmbedAPITest
 
@@ -13,8 +13,8 @@ from tests.utils import EmbedAPITest
 def embeddings_writer(tmpdir):
     store = EmbeddingStore(
         path=str(tmpdir.join("test_db")),
-        chunking_settings=ChunkingSettings(),
-        embeddings_api=EmbedAPITest,
+        chunk_settings=ChunkSettings(),
+        embed_api=EmbedAPITest,
         collection_name = f"test_collection_{uuid.uuid4()}"  
     )
     return EmbeddingsWriter(store=store)

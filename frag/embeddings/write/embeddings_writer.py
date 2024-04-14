@@ -86,14 +86,13 @@ class EmbeddingsWriter(BaseModel):
                 return collection_result[0]
 
             logging.info("getting embeddings") 
-            embedding = self.store.fetch(chunk.text)
             result = self.store.add(
                 ids=chunk.id,
-                embeddings=embedding,
                 documents=chunk.text,
                 metadatas=chunk.metadata.model_dump(exclude_none=True)  # Use the serialized metadata with None values excluded
             )
-            return embedding
+            
+            return result
         except ConnectionError as e:
             logger.error(f"Failed to connect to the database: {e}")
             raise ConnectionError("Failed to connect to the database") from e

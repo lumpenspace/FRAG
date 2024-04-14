@@ -2,15 +2,15 @@ import pytest
 
 from typing import Any, List
 
-from frag.embeddings.write.source_chunker import SourceChunker, ChunkingSettings
+from frag.embeddings.write.source_chunker import SourceChunker, ChunkSettings
 from tests.utils import EmbedAPITest
 
 @pytest.fixture
 def chunker():
-    return SourceChunker(settings=ChunkingSettings(), embedding_model=EmbedAPITest())
+    return SourceChunker(settings=ChunkSettings(), embed_api=EmbedAPITest())
 
 def chunker_validatable_dict(chunker:SourceChunker, **kwargs):
-    return {"settings": ChunkingSettings(**{**chunker.settings.model_dump().copy(), **kwargs}), "embedding_model": EmbedAPITest()}
+    return {"settings": ChunkSettings(**{**chunker.settings.model_dump().copy(), **kwargs}), "embedding_model": EmbedAPITest()}
 
 def test_chunk_text_preserve_paragraphs(chunker):
     text = "Paragraph 1.\n\nParagraph 2."
@@ -93,6 +93,6 @@ def test_chunk_text_with_zero_buffers(chunker):
 
 def test_validate_settings_passes_with_positive_buffer_and_max_tokens(chunker):
     try:
-        chunker.validate_settings(chunker_validatable_dict(chunker, settings=ChunkingSettings(max_tokens=50)))
+        chunker.validate_settings(chunker_validatable_dict(chunker, settings=ChunkSettings(max_tokens=50)))
     except ValueError:
         pytest.fail("validate_settings() raised ValueError unexpectedly!")

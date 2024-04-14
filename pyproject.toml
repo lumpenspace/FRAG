@@ -18,6 +18,7 @@ flatten-dict = "^0.4.2"
 sphinx = "^7.2.6"
 sphinxcontrib-mermaid = "^0.9.2"
 transformers = "^4.39.3"
+sentence-transformers = "^2.6.1"
 
 [build-system]
 requires = ["poetry-core"]
@@ -26,3 +27,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.scripts]
 docs = "scripts.build_docs:main"
 serve = "scripts.serve_docs:main"
+
+[tool_poetry_extra]
+oss = ["sentence-transformers"]
+

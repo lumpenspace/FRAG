@@ -1,12 +1,13 @@
 import os
 import chromadb
 import logging
-from pydantic import BaseModel, Field, model_validator, computed_field
+from pydantic import BaseModel, Field, field_validator, model_validator, computed_field
 from typing import List, Type
+from frag.embeddings.apis.base_embed_api import DBEmbedFunction
 
 from frag.embeddings.embeddings_metadata import Metadata
-from frag.embeddings.apis.openai_embed_api import  OpenAIEmbedAPI, EmbedAPI
-from frag.embeddings.write.source_chunker import SourceChunker, ChunkingSettings
+from frag.embeddings.apis import EmbedAPI, get_embed_api
+from frag.embeddings.write.source_chunker import SourceChunker, ChunkSettings
 
 logger = logging.getLogger(__name__)
 
@@ -25,10 +26,10 @@ class EmbeddingStore(BaseModel):
         path (str): Path to the Chroma database.
         collection_name (str): Name of the collection within the Chroma database.
         collection (chromadb.Collection): Chroma client for the database.
-        chunker (SourceChunker): Chunker for the embeddings.
-        embeddings_api (Type[EmbedAPI]|str): Embedding Source.
-        chunking_settings (ChunkingSettings): Chunking settings.
-        embedding_model (EmbedAPI): The embedding model used for generating embeddings.
+        embed_api (Type[EmbedAPI]|str): Embedding Source.
+            For HuggingFace models, use the model name; for OpenAI, the model name is prefixed with 'oai:'.
+            For instance: "oai:text-embedding-ada-002".
+        chunk_settings (ChunkSettings): Chunking settings.
 
     Methods:
         validate_embedding_source: Validates the embedding source and chunking settings.
@@ -42,82 +43,66 @@ class EmbeddingStore(BaseModel):
         update_metadata: Updates the metadata for an embedding in the Chroma database.
         delete_embedding: Deletes an embedding from the Chroma database based on the chunk ID.
     """
-    path: str = Field(os.path.join(os.path.dirname(__file__), "chroma_db"), description="Path to the Chroma database")
+    path: str = Field(str(os.path.join(os.path.dirname(__file__), "chroma_db")), description="Path to the Chroma database")
     collection_name: str = Field(default="default_collection", description="Name of the collection")
-    collection: chromadb.Collection = Field(..., description="Chroma client for the database")
-    chunker: SourceChunker = Field(..., description="Chunker for the embeddings")
-    embeddings_api: Type[EmbedAPI]|str = Field(..., description="Embedding Source")
-    chunking_settings: ChunkingSettings = Field(..., description="Chunking settings")
-    embedding_model: EmbedAPI 
+    embed_api: Type[EmbedAPI]|str|EmbedAPI = Field(..., description="Embedding Source")
+    chunk_settings: ChunkSettings = Field(..., description="Chunking settings")
 
-    @model_validator(mode='before')
-    @classmethod
-    def validate_embedding_source(cls, values):
-        if "embeddings_api" not in values or "chunking_settings" not in values:
-            missing_keys = [key for key in ["embeddings_api", "chunking_settings"] if key not in values]
-            raise ValueError(f"Missing required parameters: {', '.join(missing_keys)}")
-        embeddings_api = values["embeddings_api"]
-        settings: ChunkingSettings = values['chunking_settings']
-        if settings and embeddings_api:
-            if (settings.buffer_before < 0 or settings.buffer_after < 0):
-                raise ValueError(f"buffer_before and buffer_after must be greater than 0")
-            if isinstance(embeddings_api, str):
-                embedding_model = OpenAIEmbedAPI(embeddings_api)
-            else:
-                embedding_model = embeddings_api()
+    collection: chromadb.Collection = None
+    chunker: SourceChunker= None
+    client: chromadb.PersistentClient= None
 
-            if not hasattr(embedding_model, 'max_tokens'):
-                raise ValueError(f"Embedding model {embeddings_api} does not have a max_tokens attribute")
-
-            buffered_max_tokens = embedding_model.max_tokens - (settings.buffer_before + settings.buffer_after)
-            if buffered_max_tokens <= 0:
-                raise ValueError(f"The available tokens must be greater than the sum of buffer_before and buffer_after.\n\nRequired: {settings.buffer_before + settings.buffer_after}, but got: {embedding_model.max_tokens}")
-  
-            return {
-                **values,
-                "buffered_max_tokens": buffered_max_tokens,
-                "embedding_model": embedding_model,
-                "chunking_settings": settings,
-                "chunker": SourceChunker(settings=settings, embedding_model=embedding_model)
-            }
-        else:
+    @field_validator('path')
+    def validate_path(cls, v):
+        if not os.path.exists(v):
+            os.makedirs(v, exist_ok=True)
+        return v
+    
+    @field_validator('embed_api')
+    def validate_embeddings_model(cls, v):
+        if not v:
             raise ValueError("Embedding model and chunking settings must be provided")
- 
+        if isinstance(v, EmbedAPI):
+            return v
+        return get_embed_api(v)
+    
+    @field_validator('collection_name')
+    def validate_collection_name(cls, v):
+        if not v:
+            v = 'default_collection'
+            logging.warning(f"Collection name not provided, using default collection name: {v}")
+        return v
 
-    @model_validator(mode='before')
-    @classmethod
-    def validate_chroma_client(cls, values: dict):
-        path: str = values.get('path') 
-        collection_name: str = values.get('collection_name')
+    @model_validator(mode='after')
+    def validate_chroma_client(self):
+        if type(self.chunk_settings) is dict:
+            self.chunk_settings = ChunkSettings(**self.chunk_settings)
 
-        if not collection_name:
-            collection_name = 'default_collection'
-            logging.warning(f"Collection name not provided, using default collection name: {collection_name}")
-        if not os.path.exists(path):
-            os.makedirs(path, exist_ok=True)
-        if not os.access(path, os.W_OK):
-            raise ValueError(f"Database path {path} is not writable")
         try:
-            client = chromadb.PersistentClient(path=path)
+            self.client = chromadb.PersistentClient(path=self.path)
         except Exception as e:
             logger.error(f"Error creating chromadb client: {e}")
             raise e
         try:
-            collection = client.get_or_create_collection(collection_name)
+            self.collection = self.client.get_or_create_collection(
+                self.collection_name,
+                embedding_function=DBEmbedFunction(embed=self.embed_api.embed)
+            )
         except Exception as e:
             logger.error(f"Error creating chromadb collection: {e}")
             raise e
         
-        return {
-            **values,
-            "collection": collection
-        }
+        if not hasattr(self.embed_api, 'max_tokens'):
+            raise ValueError(f"Embedding model {self.embed_api.__repr_name__} does not have a max_tokens attribute")
+
+        self.chunker = SourceChunker(settings=self.chunk_settings, embed_api=self.embed_api)
+        return self
 
 
     @computed_field
     def name(self) -> str:
         """Returns the name of the embedding model."""
-        return self.embedding_model.name
+        return self.embed_api.name
 
 
     @property
@@ -148,7 +133,7 @@ class EmbeddingStore(BaseModel):
 
     def fetch(self, text: str) -> List[float]:
         """Returns the embedding vector for the given text."""
-        return self.embedding_model.embed(text)
+        return self.embed_api.embed(text)
 
     def update_metadata(self, chunk_id: str, metadata: Metadata) -> bool:
         """

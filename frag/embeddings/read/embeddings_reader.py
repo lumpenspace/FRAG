@@ -14,6 +14,8 @@ from frag.embeddings.embedding_store import EmbeddingStore
 class EmbeddingsReader(BaseModel):
     
     store: EmbeddingStore = Field(default=None)
+    n_results: int = Field(default=3)
+    min_similarity: float = Field(default=0.5)
 
     def get_similar(self, text:str, **kwargs) -> List[Chunk]:
         """
@@ -36,7 +38,13 @@ class EmbeddingsReader(BaseModel):
         """
         
         try:
-            result = self.store.query(query_embeddings=self.store.fetch(text), **kwargs)
-            return result
+            db_results = self.store.query(
+                query_texts=[text],
+                n_results=self.n_results,
+                **kwargs)
         except Exception as e:
-            raise ConnectionError("Failed to connect to the database") from e
+            raise ConnectionError("Failed to fetch from database") from e
+        results = zip(db_results["ids"], db_results["distances"])
+
+        return results
+

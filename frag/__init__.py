@@ -1,2 +1,2 @@
-from .embeddings import SourceChunker, ChunkingSettings, EmbeddingsWriter, Metadata, SourceChunk, Chunk, OpenAIEmbedAPI
+from .embeddings import SourceChunker, ChunkSettings, EmbeddingsWriter, Metadata, SourceChunk, Chunk, OpenAIEmbedAPI
 

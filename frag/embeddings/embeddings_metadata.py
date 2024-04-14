@@ -58,7 +58,7 @@ class ChunkMetadata(Metadata):
     @classmethod
     def separate_from_combined_metadata(cls, combined_metadata: Dict[str, Any]):
         # Separate combined metadata back into document-level and chunk-specific metadata when reading from the database
-        document_metadata_keys = Metadata.__fields__.keys()
+        document_metadata_keys = Metadata.model_fields.keys()
         document_metadata = {key: combined_metadata[key] for key in document_metadata_keys if key in combined_metadata}
         chunk_metadata = {key: combined_metadata[key] for key in combined_metadata if key not in document_metadata_keys}
         return cls(**chunk_metadata), Metadata(**document_metadata)
