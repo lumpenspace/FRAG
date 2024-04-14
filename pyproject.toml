@@ -19,6 +19,8 @@ sphinx = "^7.2.6"
 sphinxcontrib-mermaid = "^0.9.2"
 transformers = "^4.39.3"
 sentence-transformers = "^2.6.1"
+marko = "^2.0.3"
+pdoc = "^14.4.0"
 
 [build-system]
 requires = ["poetry-core"]

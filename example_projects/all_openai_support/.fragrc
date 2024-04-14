@@ -23,7 +23,8 @@
     "presence_penalty": 0
   },
   "retrieval_model": {
-    "model": "text-embedding-3-large"
+    "model": "text-embedding-3-large",
+    "prompt":
   }
 }
 

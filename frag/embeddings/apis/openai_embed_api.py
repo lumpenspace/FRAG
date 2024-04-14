@@ -1,14 +1,3 @@
-"""
-This module defines the base and OpenAI-specific embedding model classes.
-
-The `EmbeddingModel` class serves as a base for creating embedding models with
-methods for tokenization, embedding, and decoding.
-
-The `OpenAiEmbeddingModel` class extends this base class to interact with OpenAI's
-embedding models, providing implementations for the base class's abstract methods
-using OpenAI's API and a specified tokenizer.
-"""
-
 from typing import List, Optional
 from chromadb import Embeddings
 from chromadb.types import Vector
@@ -25,10 +14,9 @@ class OpenAIEmbedAPI(EmbedAPI):
     """
     A class to interact with OpenAI's embedding models.
 
-    Attributes:
-        name: The name of the OpenAI embedding model.
-        api_key: The API key for the OpenAI client.
-        tokenizer_name: The name of the tokenizer to use.
+    Extends this base class to interact with OpenAI's
+    embedding models, providing implementations for the base class's abstract methods
+    using OpenAI's API and a specified tokenizer.
     """
     name: str = Field("text-embedding-small", description="The name of the OpenAI embedding model")
     api_key: str = Field(..., description="The API key for the OpenAI client")

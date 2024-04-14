@@ -30,7 +30,16 @@ class ChunkSettings(BaseModel):
 
 class SourceChunker(BaseModel):
     """
-    A class for chunking text into manageable pieces for embedding.
+    `SourceChunker` class, responsible for
+    breaking down text into manageable chunks for embedding.
+
+    It leverages settings defined in `ChunkSettings` to customize the
+    chunking process, such as preserving paragraphs or sentences, and setting buffer
+    sizes before and after chunks. The class also validates these settings against
+    the capabilities of the specified embedding model to ensure effective chunking.
+
+    Additionally, it provides methods for splitting text into chunks and adding
+    buffer content around chunks for context preservation.
     """
     settings: ChunkSettings = Field(default_factory=ChunkSettings, description="The settings for the chunking process")
     embed_api: EmbedAPI = Field(..., description="The embedding model to use")
@@ -38,6 +47,18 @@ class SourceChunker(BaseModel):
 
     @model_validator(mode='before')
     def validate_settings(cls, values: dict):
+        """
+        Validates the chunk settings against the embedding model's capabilities.
+
+        Args:
+            values (dict): The initial values for the model.
+
+        Returns:
+            dict: The validated values with adjusted `buffered_max_tokens`.
+
+        Raises:
+            ValueError: If buffer settings are invalid or the total buffer size exceeds the model's max tokens.
+        """
         settings: ChunkSettings = values.get("settings")
         embed_api: EmbedAPI = values.get("embed_api")
         buffered_max_tokens = 0
@@ -56,6 +77,15 @@ class SourceChunker(BaseModel):
 
 
     def _split_text_into_chunks(self, text: str) -> List[List[int]]:
+        """
+        Splits the given text into chunks based on the embedding model's token limits and buffer settings.
+
+        Args:
+            text (str): The text to be chunked.
+
+        Returns:
+            List[List[int]]: A list of token lists, each representing a chunk.
+        """
         tokens = self.embed_api.encode(text)
         max_tokens = self.embed_api.max_tokens
         chunk_size = max_tokens - (self.settings.buffer_before + self.settings.buffer_after)
@@ -68,6 +98,18 @@ class SourceChunker(BaseModel):
         return token_chunks
 
     def _add_chunk(self, unit: str, current_chunk_tokens: List[int], chunks: List[dict], max_tokens: int):
+        """
+        Adds a chunk of tokens to the list of chunks, handling buffer zones and splitting large units.
+
+        Args:
+            unit (str): The text unit to be chunked.
+            current_chunk_tokens (List[int]): The current list of tokens in the chunk being built.
+            chunks (List[dict]): The list of chunks built so far.
+            max_tokens (int): The maximum number of tokens allowed in a chunk.
+
+        Returns:
+            Tuple[List[int], List[dict]]: The updated current chunk tokens and chunks list.
+        """
         unit_tokens = self.embed_api.encode(unit)
         if len(unit_tokens) > max_tokens:
             unit_chunks = self._split_text_into_chunks(unit)
@@ -85,6 +127,17 @@ class SourceChunker(BaseModel):
         return current_chunk_tokens, chunks
 
     def _create_chunk(self, tokens: List[int], before_buffer: str = '', after_buffer: str = '') -> dict:
+        """
+        Creates a chunk with optional before and after buffer content.
+
+        Args:
+            tokens (List[int]): The list of tokens for the chunk.
+            before_buffer (str, optional): The text to prepend for context. Defaults to ''.
+            after_buffer (str, optional): The text to append for context. Defaults to ''.
+
+        Returns:
+            dict: A dictionary representing the chunk with text and buffer content.
+        """
         return SourceChunk(
             text=self.embed_api.decode(tokens),
             before=before_buffer,
@@ -95,6 +148,12 @@ class SourceChunker(BaseModel):
         """
         Breaks down the given text into chunks based on the chunking 
         settings and embedding model's capabilities.
+        
+        Args:
+            text (str): The text to be chunked.
+            
+        Returns:
+            List[SourceChunk]: A list of `SourceChunk` objects representing the chunked text.
         """
         chunks = []
         if text == "":

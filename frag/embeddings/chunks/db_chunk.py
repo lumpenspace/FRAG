@@ -7,12 +7,25 @@ from .chunk import Chunk
 logger = logging.getLogger(__name__)
 
 class DBChunk(Chunk):
+    """
+    A database chunk that extends the base Chunk model with a score attribute.
+    """
     score: float = Field(default=0.0, description="The score of the chunk.")
 
     @classmethod
     def from_db_results(cls, ids: List[List[str]], documents: List[List[str]], metadatas: List[List[dict]], distances: List[List[float]], **kwargs):
         """
-        Creates a Chunk instance from a database result.
+        Creates a list of DBChunk instances from database results.
+
+        Args:
+            ids (List[List[str]]): The list of chunk ids.
+            documents (List[List[str]]): The list of chunk documents.
+            metadatas (List[List[dict]]): The list of chunk metadatas.
+            distances (List[List[float]]): The list of chunk distances.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            List[DBChunk]: A list of DBChunk instances.
         """
         
         db_chunks = []

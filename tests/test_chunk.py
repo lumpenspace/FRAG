@@ -1,7 +1,6 @@
 import pytest
 
-from frag.embeddings.chunks import SourceChunk, Chunk, DBChunk
-from frag.embeddings.embeddings_metadata import Metadata
+from frag.embeddings import SourceChunk, Chunk, DBChunk, Metadata
 
 def test_source_chunk_creation():
     text = "Sample text"

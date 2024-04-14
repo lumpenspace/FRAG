@@ -1,1 +1,4 @@
-from .embeddings import Metadata, OpenAIEmbedAPI
+"""
+.. include:: ../README.md
+"""
+import frag.embeddings

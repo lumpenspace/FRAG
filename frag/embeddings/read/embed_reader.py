@@ -13,6 +13,14 @@ from frag.embeddings.embedding_store import EmbeddingStore
 logger = logging.getLogger(__name__)
 
 class EmbeddingsReader(BaseModel):
+    """
+    A class to read and fetch similar embeddings from an embedding store.
+    
+    Attributes:
+        store (EmbeddingStore): The embedding store to fetch embeddings from.
+        n_results (int): The number of results to fetch.
+        min_similarity (float): The minimum similarity threshold for fetched embeddings.
+    """
     
     store: EmbeddingStore = Field(default=None)
     n_results: int = Field(default=3)
@@ -44,6 +52,3 @@ class EmbeddingsReader(BaseModel):
                                            
         except Exception as e:
             raise e
-
-
-
