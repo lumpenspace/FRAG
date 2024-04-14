@@ -7,7 +7,7 @@ from frag.embeddings.apis.base_embed_api import DBEmbedFunction
 
 from frag.embeddings.embeddings_metadata import Metadata
 from frag.embeddings.apis import EmbedAPI, get_embed_api
-from frag.embeddings.write.source_chunker import SourceChunker, ChunkSettings
+from frag.embeddings.chunks import SourceChunker, ChunkSettings
 
 logger = logging.getLogger(__name__)
 
@@ -134,6 +134,13 @@ class EmbeddingStore(BaseModel):
     def fetch(self, text: str) -> List[float]:
         """Returns the embedding vector for the given text."""
         return self.embed_api.embed(text)
+    
+    def find_similar(self, text: str|List[str], n_results: int = 1) -> chromadb.QueryResult:
+        """Returns the most similar embeddings to the given text."""
+        return self.collection.query(
+            query_texts=text if isinstance(text, list) else [text],
+            n_results=n_results
+        )
 
     def update_metadata(self, chunk_id: str, metadata: Metadata) -> bool:
         """

@@ -1,11 +1,9 @@
 import pytest
 import uuid
 
-from frag.embeddings.embedding_store import EmbeddingStore
+from frag.embeddings import Metadata, EmbedWriter, EmbeddingStore
+from frag.embeddings.chunks import ChunkSettings
 
-from frag.embeddings.embeddings_metadata import Metadata
-from frag.embeddings.write.embeddings_writer import EmbeddingsWriter
-from frag.embeddings.write.source_chunker import ChunkSettings
 
 from tests.utils import EmbedAPITest
 
@@ -17,9 +15,9 @@ def embeddings_writer(tmpdir):
         embed_api=EmbedAPITest,
         collection_name = f"test_collection_{uuid.uuid4()}"  
     )
-    return EmbeddingsWriter(store=store)
+    return EmbedWriter(store=store)
 
-def test_create_embeddings_for_document(embeddings_writer:EmbeddingsWriter):
+def test_create_embeddings_for_document(embeddings_writer:EmbedWriter):
     text = "This is a sample document."
     metadata = Metadata(
         title="title",

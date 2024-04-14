@@ -15,14 +15,12 @@ from typing import List
 from pydantic import BaseModel, Field
 
 from frag.embeddings.embedding_store import EmbeddingStore
-from frag.embeddings.Chunk import SourceChunk
-from frag.embeddings.write.source_chunker import SourceChunker
-from frag.embeddings.Chunk import Chunk
+from frag.embeddings.chunks import SourceChunk, SourceChunker, Chunk
 from frag.embeddings.embeddings_metadata import Metadata
 
 logger = logging.getLogger(__name__)
 
-class EmbeddingsWriter(BaseModel):
+class EmbedWriter(BaseModel):
     
     store: EmbeddingStore = Field(default=None)
     chunker: SourceChunker = Field(default=None)

@@ -10,7 +10,7 @@ using OpenAI's API and a specified tokenizer.
 """
 
 from typing import List, Optional
-from chromadb import Documents, EmbeddingFunction, Embeddings
+from chromadb import Embeddings
 from chromadb.types import Vector
 from pydantic import Field, field_validator, model_validator
 from openai import OpenAI, OpenAIError

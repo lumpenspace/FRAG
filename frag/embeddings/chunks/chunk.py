@@ -38,6 +38,7 @@ class Chunk(BaseModel):
     text: str = Field(..., description="Text of the chunk")
     metadata: Metadata = Field(..., description="Metadata of the chunk")
     id: str = Field(..., description="ID of the chunk")
+
     @classmethod
     def make_id(cls, text: str, metadata: Metadata, part: int) -> str:
         """

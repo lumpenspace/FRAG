@@ -3,13 +3,14 @@
 
 It fetches the closest n embeddings to a given input and, if they are contiguous, returns them as a single text block.
 """
-from chromadb import Metadata
 from pydantic import BaseModel, Field
 from typing import List
+import logging
 
-from frag.embeddings.Chunk import Chunk
+from frag.embeddings.chunks import Chunk,  DBChunk
 from frag.embeddings.embedding_store import EmbeddingStore
 
+logger = logging.getLogger(__name__)
 
 class EmbeddingsReader(BaseModel):
     
@@ -17,7 +18,7 @@ class EmbeddingsReader(BaseModel):
     n_results: int = Field(default=3)
     min_similarity: float = Field(default=0.5)
 
-    def get_similar(self, text:str, **kwargs) -> List[Chunk]:
+    def get_similar(self, text:str, n_results: int = None, **kwargs) -> List[Chunk]:
         """
         Fetches embeddings similar to the given string.
 
@@ -38,13 +39,11 @@ class EmbeddingsReader(BaseModel):
         """
         
         try:
-            db_results = self.store.query(
-                query_texts=[text],
-                n_results=self.n_results,
-                **kwargs)
+            db_results = self.store.find_similar(text=text, n_results=n_results or self.n_results)
+            return DBChunk.from_db_results(**db_results)
+                                           
         except Exception as e:
-            raise ConnectionError("Failed to fetch from database") from e
-        results = zip(db_results["ids"], db_results["distances"])
+            raise e
 
-        return results
+
 

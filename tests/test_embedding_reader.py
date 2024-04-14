@@ -4,9 +4,9 @@ import uuid
 from frag.embeddings.embedding_store import EmbeddingStore
 
 from frag.embeddings.embeddings_metadata import Metadata
-from frag.embeddings.read.embeddings_reader import EmbeddingsReader
-from frag.embeddings.write.embeddings_writer import EmbeddingsWriter
-from frag.embeddings.write.source_chunker import ChunkSettings
+from frag.embeddings.read.embed_reader import EmbeddingsReader
+from frag.embeddings.write.embed_writer import EmbedWriter
+from frag.embeddings.chunks import ChunkSettings
 
 from tests.utils import EmbedAPITest
 
@@ -18,7 +18,7 @@ def embeddings_reader(tmpdir):
         embed_api=EmbedAPITest,
         collection_name = f"test_collection_{uuid.uuid4()}"  
     )
-    embeddings_writer = EmbeddingsWriter(store=store)
+    embeddings_writer = EmbedWriter(store=store)
     text = "This is a sample document."
     metadata = Metadata(
         title="title",
@@ -33,6 +33,6 @@ def embeddings_reader(tmpdir):
 
 def test_get_similar(embeddings_reader:EmbeddingsReader):
     """Test fetching similar embeddings from the store."""
-    similar_embeddings = embeddings_reader.get_similar(text="my_text")
+    similar_embeddings = embeddings_reader.get_similar(text="my_text", n_results=1)
     assert similar_embeddings is not None, "Failed to fetch similar embeddings"
 

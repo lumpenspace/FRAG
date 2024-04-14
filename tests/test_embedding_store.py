@@ -3,7 +3,7 @@ import pytest
 import uuid
 
 from frag.embeddings.embedding_store import EmbeddingStore
-from frag.embeddings.write.source_chunker import ChunkSettings
+from frag.embeddings.chunks import ChunkSettings
 
 from tests.utils import EmbedAPITest
 

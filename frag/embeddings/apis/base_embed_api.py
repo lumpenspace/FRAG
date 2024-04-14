@@ -1,5 +1,4 @@
-from math import e
-from typing import Any, Dict, List, Union, TypeVar, Protocol, Callable
+from typing import Any, Dict, List, TypeVar, Protocol, Callable
 from pydantic import BaseModel, Field
 from chromadb import Documents, Embeddings
 

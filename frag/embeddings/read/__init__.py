@@ -1,2 +1,2 @@
-from .embeddings_reader import EmbeddingsReader
+from .embed_reader import EmbeddingsReader
 

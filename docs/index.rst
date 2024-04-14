@@ -30,7 +30,7 @@ Welcome to qs-frag's documentation!
 .. automodule:: frag.embeddings.write
    :members:
       frag.embeddings.write.embeddings_writer
-      frag.embeddings.write.source_chunker
+      frag.embeddings.chunks
    :undoc-members:
    :show-inheritance:
 

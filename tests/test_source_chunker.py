@@ -1,8 +1,6 @@
 import pytest
 
-from typing import Any, List
-
-from frag.embeddings.write.source_chunker import SourceChunker, ChunkSettings
+from frag.embeddings.chunks import SourceChunker, ChunkSettings
 from tests.utils import EmbedAPITest
 
 @pytest.fixture

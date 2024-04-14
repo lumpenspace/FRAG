@@ -16,7 +16,7 @@ import re
 from typing import List
 from pydantic import BaseModel, Field, model_validator
 
-from frag.embeddings.Chunk import SourceChunk
+from .chunk import SourceChunk
 from frag.embeddings.apis.openai_embed_api import EmbedAPI
 
 class ChunkSettings(BaseModel):
