@@ -56,4 +56,3 @@ def test_from_db_result():
         'distances': [[0.5]]
     }
     chunk = DBChunk.from_db_results(**db_result)
-
