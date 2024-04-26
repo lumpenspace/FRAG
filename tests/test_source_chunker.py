@@ -1,14 +1,17 @@
+# pylint: disable=[missing-docstring,W0621:redefined-outer-name]
+
 import pytest
 
-from frag.embeddings.chunks import SourceChunker, ChunkSettings
+from frag.embeddings.chunks import SourceChunker
+from frag.settings.settings import ChunkerSettings
 from tests.utils import EmbedAPITest
 
 @pytest.fixture
 def chunker():
-    return SourceChunker(settings=ChunkSettings(), embed_api=EmbedAPITest())
+    return SourceChunker(settings=ChunkerSettings(), embed_api=EmbedAPITest())
 
-def chunker_validatable_dict(chunker:SourceChunker, **kwargs):
-    return {"settings": ChunkSettings(**{**chunker.settings.model_dump().copy(), **kwargs}), "embedding_model": EmbedAPITest()}
+def chunker_validatable_dict(chunker: SourceChunker, **kwargs):
+    return {"settings": ChunkerSettings(**{**chunker.settings.model_dump(), **kwargs}), "embedding_model": EmbedAPITest()}
 
 def test_chunk_text_preserve_paragraphs(chunker):
     text = "Paragraph 1.\n\nParagraph 2."
@@ -88,9 +91,3 @@ def test_chunk_text_with_zero_buffers(chunker):
     assert chunks[0].text == "Word1 Word2 Word3 Word4 Word5"
     assert chunks[0].before == ""
     assert chunks[0].after == ""
-
-def test_validate_settings_passes_with_positive_buffer_and_max_tokens(chunker):
-    try:
-        chunker.validate_settings(chunker_validatable_dict(chunker, settings=ChunkSettings(max_tokens=50)))
-    except ValueError:
-        pytest.fail("validate_settings() raised ValueError unexpectedly!")

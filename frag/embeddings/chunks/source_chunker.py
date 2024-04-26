@@ -2,7 +2,7 @@
 This module contains the `SourceChunker` class, which is responsible for
 breaking down text into manageable chunks for embedding.
 
-It leverages settings defined in `ChunkSettings` to customize the
+It leverages settings defined in `ChunkerSettings` to customize the
 chunking process, such as preserving paragraphs or sentences, and setting buffer
 sizes before and after chunks. The class also validates these settings against
 the capabilities of the specified embedding model to ensure effective chunking.
@@ -18,22 +18,15 @@ from pydantic import BaseModel, Field, model_validator
 
 from .chunk import SourceChunk
 from frag.embeddings.apis.openai_embed_api import EmbedAPI
+from frag.settings.settings import ChunkerSettings
 
-class ChunkSettings(BaseModel):
-    """
-    Settings for the chunking process.
-    """
-    preserve_paragraphs: bool = Field(False, description="Whether to preserve paragraphs in the embedding process")
-    preserve_sentences: bool = Field(True, description="Whether to preserve sentences in the embedding process")
-    buffer_before: int = Field(10, description="The number of tokens to buffer before the current sentence")
-    buffer_after: int = Field(10, description="The number of tokens to buffer after the current sentence")
 
 class SourceChunker(BaseModel):
     """
     `SourceChunker` class, responsible for
     breaking down text into manageable chunks for embedding.
 
-    It leverages settings defined in `ChunkSettings` to customize the
+    It leverages settings defined in `ChunkerSettings` to customize the
     chunking process, such as preserving paragraphs or sentences, and setting buffer
     sizes before and after chunks. The class also validates these settings against
     the capabilities of the specified embedding model to ensure effective chunking.
@@ -41,11 +34,12 @@ class SourceChunker(BaseModel):
     Additionally, it provides methods for splitting text into chunks and adding
     buffer content around chunks for context preservation.
     """
-    settings: ChunkSettings = Field(default_factory=ChunkSettings, description="The settings for the chunking process")
+    settings: ChunkerSettings = Field(default_factory=ChunkerSettings, description="The settings for the chunking process")
     embed_api: EmbedAPI = Field(..., description="The embedding model to use")
     buffered_max_tokens: int = Field(0, description="Maximum tokens per chunk, adjusted for buffers")
 
     @model_validator(mode='before')
+    @classmethod
     def validate_settings(cls, values: dict):
         """
         Validates the chunk settings against the embedding model's capabilities.
@@ -59,12 +53,12 @@ class SourceChunker(BaseModel):
         Raises:
             ValueError: If buffer settings are invalid or the total buffer size exceeds the model's max tokens.
         """
-        settings: ChunkSettings = values.get("settings")
+        settings: ChunkerSettings = values.get("settings")
         embed_api: EmbedAPI = values.get("embed_api")
         buffered_max_tokens = 0
         if settings and embed_api:
             if (settings.buffer_before < 0 or settings.buffer_after < 0):
-                raise ValueError(f"buffer_before and buffer_after must be greater than 0")
+                raise ValueError("buffer_before and buffer_after must be greater than 0")
             buffered_max_tokens = embed_api.max_tokens - (settings.buffer_before + settings.buffer_after)
             if buffered_max_tokens <= 0:
                 raise ValueError(f"The available tokens must be greater than the sum of buffer_before and buffer_after.\n\nRequired: {settings.buffer_before + settings.buffer_after}, but got: {embed_api.max_tokens}")

@@ -1,5 +1,6 @@
 import os
 import chromadb
+from chromadb.errors import ChromaError, InvalidCollectionException
 import logging
 from pydantic import BaseModel, Field, field_validator, model_validator, computed_field
 from typing import List, Type
@@ -7,7 +8,8 @@ from frag.embeddings.apis.base_embed_api import DBEmbedFunction
 
 from frag.embeddings.embeddings_metadata import Metadata
 from frag.embeddings.apis import EmbedAPI, get_embed_api
-from frag.embeddings.chunks import SourceChunker, ChunkSettings
+from frag.embeddings.chunks import SourceChunker
+from frag.settings import ChunkerSettings
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +31,7 @@ class EmbeddingStore(BaseModel):
         embed_api (Type[EmbedAPI]|str): Embedding Source.
             For HuggingFace models, use the model name; for OpenAI, the model name is prefixed with 'oai:'.
             For instance: "oai:text-embedding-ada-002".
-        chunk_settings (ChunkSettings): Chunking settings.
+        chunk_settings (ChunkerSettings): Chunking settings.
 
     Methods:
         validate_embedding_source: Validates the embedding source and chunking settings.
@@ -46,19 +48,24 @@ class EmbeddingStore(BaseModel):
     path: str = Field(str(os.path.join(os.path.dirname(__file__), "chroma_db")), description="Path to the Chroma database")
     collection_name: str = Field(default="default_collection", description="Name of the collection")
     embed_api: Type[EmbedAPI]|str|EmbedAPI = Field(..., description="Embedding Source")
-    chunk_settings: ChunkSettings = Field(..., description="Chunking settings")
+    chunk_settings: ChunkerSettings = Field(..., description="Chunking settings")
 
     collection: chromadb.Collection = None
     chunker: SourceChunker= None
     client: chromadb.PersistentClient= None
 
     @field_validator('path')
+    @classmethod
     def validate_path(cls, v):
+        """
+        Validates the path to the Chroma database and creates the directory if it does not exist.
+        """
         if not os.path.exists(v):
             os.makedirs(v, exist_ok=True)
         return v
     
     @field_validator('embed_api')
+    @classmethod
     def validate_embeddings_model(cls, v):
         if not v:
             raise ValueError("Embedding model and chunking settings must be provided")
@@ -67,21 +74,28 @@ class EmbeddingStore(BaseModel):
         return get_embed_api(v)
     
     @field_validator('collection_name')
+    @classmethod
     def validate_collection_name(cls, v):
+        """
+        Validates the collection name and sets a default if not provided.
+        """
         if not v:
             v = 'default_collection'
-            logging.warning(f"Collection name not provided, using default collection name: {v}")
+            logging.warning("Collection name not provided, using default collection name: %s", v)
         return v
 
     @model_validator(mode='after')
     def validate_chroma_client(self):
-        if type(self.chunk_settings) is dict:
-            self.chunk_settings = ChunkSettings(**self.chunk_settings)
+        """
+        Validates and initializes the Chroma client and collection.
+        """
+        if isinstance(self.chunk_settings, dict):
+            self.chunk_settings = ChunkerSettings(**self.chunk_settings)
 
         try:
             self.client = chromadb.PersistentClient(path=self.path)
         except Exception as e:
-            logger.error(f"Error creating chromadb client: {e}")
+            logger.error("Error creating chromadb client: %s", e)
             raise e
         try:
             self.collection = self.client.get_or_create_collection(
@@ -89,11 +103,11 @@ class EmbeddingStore(BaseModel):
                 embedding_function=DBEmbedFunction(embed=self.embed_api.embed)
             )
         except Exception as e:
-            logger.error(f"Error creating chromadb collection: {e}")
+            logger.error("Error creating chromadb collection: %s", e)
             raise e
         
         if not hasattr(self.embed_api, 'max_tokens'):
-            raise ValueError(f"Embedding model {self.embed_api.__repr_name__} does not have a max_tokens attribute")
+            raise ValueError("Embedding model %s does not have a max_tokens attribute", self.embed_api.__repr_name__)
 
         self.chunker = SourceChunker(settings=self.chunk_settings, embed_api=self.embed_api)
         return self
@@ -110,13 +124,13 @@ class EmbeddingStore(BaseModel):
         if not os.path.exists(self.path):
             os.makedirs(self.path, exist_ok=True)
         if not os.access(self.path, os.W_OK):
-            raise ValueError(f"Database path {self.path} is not writable")
+            raise ValueError("Database path {self.path} is not writable")
         try:
             client = chromadb.PersistentClient(path=self.path)
             collection = client.get_or_create_collection(self.collection_name)
             return collection
         except Exception as e:
-            logging.error(f"Error creating chromadb client or collection: {e}")
+            logging.error("Error creating chromadb client or collection: %s", e)
             raise e
         
     @property
@@ -149,7 +163,7 @@ class EmbeddingStore(BaseModel):
         # if the current metadata has a different schema, throw an error.
         result = self.chroma_collection.get(ids=['chunk_id']).get(chunk_id)
         if result.metadata and not metadata.model_validate(result.metadata):
-            raise ValueError(f"The metadata schema is different from the current metadata schema")
+            raise ValueError("The metadata schema is different from the current metadata schema")
         self.chroma_collection.update(ids=chunk_id, metadatas=metadata.model_dump())
         return True
 
@@ -166,11 +180,14 @@ class EmbeddingStore(BaseModel):
         try:
             delete_result = self.chroma_collection.delete(ids=[chunk_id])
             if delete_result:
-                logging.info(f"Successfully deleted embedding with ID: {chunk_id}")
+                logging.info("Successfully deleted embedding with ID: %s", chunk_id)
                 return True
             else:
-                logging.warning(f"Failed to delete embedding with ID: {chunk_id}")
+                logging.warning("Failed to delete embedding with ID: %s", chunk_id)
                 return False
-        except Exception as e:
-            logging.error(f"Error deleting embedding: {e}")
+        except InvalidCollectionException as e:
+            logging.error("Invalid Collection: %s", e)
+            return False
+        except ChromaError as e:
+            logging.error("Chroma database error: %s", e)
             return False

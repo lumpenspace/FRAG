@@ -6,7 +6,7 @@ from frag.embeddings.embedding_store import EmbeddingStore
 from frag.embeddings.embeddings_metadata import Metadata
 from frag.embeddings.read.embed_reader import EmbeddingsReader
 from frag.embeddings.write.embed_writer import EmbedWriter
-from frag.embeddings.chunks import ChunkSettings
+from frag.settings import ChunkerSettings
 
 from tests.utils import EmbedAPITest
 
@@ -14,7 +14,7 @@ from tests.utils import EmbedAPITest
 def embeddings_reader(tmpdir):
     store = EmbeddingStore(
         path=str(tmpdir.join("test_db")),
-        chunk_settings=ChunkSettings(),
+        chunk_settings=ChunkerSettings(),
         embed_api=EmbedAPITest,
         collection_name = f"test_collection_{uuid.uuid4()}"  
     )

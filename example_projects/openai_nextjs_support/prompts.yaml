@@ -1,0 +1,120 @@
+summarizer: 
+  text: > 
+      The summarizing bot is an intelligent filter and condenser, adept in recognizing pertinent information from Next.js and React content
+      It is given a user question and retrieved document. It first determines whether the retrieved text is relevant to the user's question.
+      If relevant, the bot then produces a clear, succinct summary designed to assist the interface bot in answering the user query effectively.
+      The bot's output is structured into two parts: the first confirms the relevance of the content (# Relevance), \
+      and the second provides a concise summary (# Summary).
+      The summary should provide key points and essential context that allow the interface bot to generate informative and precise responses.
+
+      The response should be in YAML. If the excerpt isn't relevant, it will contain:
+      
+      ```relevant: false```
+
+      Otherwise, it will contain:
+      ```
+      relevant: true
+      complete: true # or false the document isn't sufficient for answering the question.
+      summary: >
+        The summary should provide key points and essential context that allow the interface bot to generate informative and precise responses.
+  examples:
+    irrelevant:
+      -
+        - role: user
+          content: i cannot seem to link assets in pages with dynamic paths
+        - role: user
+          type: document
+          content: 
+          - url: https://nextjs.org/docs/app/building-your-application/testing
+          - title: Testing
+          - excerpt: >
+              In React and Next.js, there are a few different types of tests you can write, each with its own purpose and use cases. This page provides an overview of types and commonly used tools you can use to test your application.
+
+              Types of tests
+              Unit testing involves testing individual units (or blocks of code) in isolation. In React, a unit can be a single function, hook, or component.
+              Component testing is a more focused version of unit testing where the primary subject of the tests is React components. This may involve testing how components are rendered, their interaction with props, and their behavior in response to user events.
+              Integration testing involves testing how multiple units work together. This can be a combination of components, hooks, and functions.
+              End-to-End (E2E) Testing involves testing user flows in an environment that simulates real user scenarios, like the browser. This means testing specific tasks (e.g. signup flow) in a production-like environment.
+              Snapshot testing involves capturing the rendered output of a component and saving it to a snapshot file. When tests run, the current rendered output of the component is compared against the saved snapshot. Changes in the snapshot are used to indicate unexpected changes in behavior.
+              Async Server Components
+              Since async Server Components are new to the React ecosystem, some tools do not fully support them. In the meantime, we recommend using End-to-End Testing over Unit Testing for async components.
+          - response: >
+              - relevant: false
+    relevant:
+      - user: im using the app directory, how would i make a dynamic route?
+      - document:
+          url: https://nextjs.org/docs/app/building-your-application/routing/dynamic-routes
+          title: Dynamic Routes
+          excerpt: >
+            Dynamic Routes
+            When you don't know the exact segment names ahead of time and want to create routes from dynamic data, you can use Dynamic Segments that are filled in at request time or prerendered at build time.
+
+            Convention
+            A Dynamic Segment can be created by wrapping a folder's name in square brackets: [folderName]. For example, [id] or [slug].
+
+            Dynamic Segments are passed as the params prop to layout, page, route, and generateMetadata functions.
+
+            Example
+            For example, a blog could include the following route app/blog/[slug]/page.js where [slug] is the Dynamic Segment for blog posts.
+
+            app/blog/[slug]/page.tsx
+            TypeScript
+
+            TypeScript
+
+            export default function Page({ params }: { params: { slug: string } }) {
+              return <div>My Post: {params.slug}</div>
+            }
+            Route	Example URL	params
+            app/blog/[slug]/page.js	/blog/a	{ slug: 'a' }
+            app/blog/[slug]/page.js	/blog/b	{ slug: 'b' }
+            app/blog/[slug]/page.js	/blog/c	{ slug: 'c' }
+            See the generateStaticParams() page to learn how to generate the params for the segment.
+
+            Good to know: Dynamic Segments are equivalent to Dynamic Routes in the pages directory.
+
+            Generating Static Params
+            The generateStaticParams function can be used in combination with dynamic route segments to statically generate routes at build time instead of on-demand at request time.
+
+            app/blog/[slug]/page.tsx
+            TypeScript
+
+            TypeScript
+
+            export async function generateStaticParams() {
+              const posts = await fetch('https://.../posts').then((res) => res.json())
+            
+              return posts.map((post) => ({
+                slug: post.slug,
+              }))
+            }
+            The primary benefit of the generateStaticParams function is its smart retrieval of data. If content is fetched within the generateStaticParams function using a fetch request, the requests are automatically memoized. This means a fetch request with the same arguments across multiple generateStaticParams, Layouts, and Pages will only be made once, which decreases build times.
+
+            Use the migration guide if you are migrating from the pages directory.
+
+            See generateStaticParams server function documentation for more information and advanced use cases.
+
+            Catch-all Segments
+            Dynamic Segments can be extended to catch-all subsequent segments by adding an ellipsis inside the brackets [...folderName].
+
+            For example, app/shop/[...slug]/page.js will match /shop/clothes, but also /shop/clothes/tops, /shop/clothes/tops/t-shirts, and so on.
+
+            Route	Example URL	params
+            app/shop/[...slug]/page.js	/shop/a	{ slug: ['a'] }
+            app/shop/[...slug]/page.js	/shop/a/b	{ slug: ['a', 'b'] }
+            app/shop/[...slug]/page.js	/shop/a/b/c	{ slug: ['a', 'b', 'c'] }
+            Optional Catch-all Segments
+            Catch-all Segments can be made optional by including the parameter in double square brackets: [[...folderName]].
+
+            For example, app/shop/[[...slug]]/page.js will also match /shop, in addition to /shop/clothes, /shop/clothes/tops, /shop/clothes/tops/t-shirts.
+
+            The difference between catch-all and optional catch-all segments is that with optional, the route without the parameter is also matched (/shop in the example above).
+
+            Route	Example URL	params
+            app/shop/[[...slug]]/page.js	/shop	{}
+            app/shop/[[...slug]]/page.js	/shop/a	{ slug: ['a'] }
+            app/shop/[[...slug]]/page.js	/shop/a/b	{ slug: ['a', 'b'] }
+            app/shop/[[...slug]]/page.js	/shop/a/b/c	{ slug: ['a', 'b', 'c'] }
+            TypeScript
+            When using TypeScript, you can add types for params depending on your configured route segment.
+      - 

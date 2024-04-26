@@ -2,22 +2,28 @@ import pytest
 import uuid
 
 from frag.embeddings import Metadata, EmbedWriter, EmbeddingStore
-from frag.embeddings.chunks import ChunkSettings
+from frag.settings import ChunkerSettings
 
 
 from tests.utils import EmbedAPITest
 
 @pytest.fixture
 def embeddings_writer(tmpdir):
+    """
+    Create an EmbedWriter instance with a temporary directory as the store path.
+    """
     store = EmbeddingStore(
         path=str(tmpdir.join("test_db")),
-        chunk_settings=ChunkSettings(),
+        chunk_settings=ChunkerSettings(),
         embed_api=EmbedAPITest,
-        collection_name = f"test_collection_{uuid.uuid4()}"  
+        collection_name = f"test_collection_{uuid.uuid4()}"
     )
     return EmbedWriter(store=store)
 
-def test_create_embeddings_for_document(embeddings_writer:EmbedWriter):
+def test_create_embeddings_for_document(embeddings_writer):
+    """
+    Test that embeddings are created for a document and stored in the database.
+    """
     text = "This is a sample document."
     metadata = Metadata(
         title="title",
@@ -33,6 +39,9 @@ def test_create_embeddings_for_document(embeddings_writer:EmbedWriter):
     assert results.get('documents')[0] == chunks[0].text
 
 def test_metadata_serialization_excludes_none():
+    """
+    Test that the metadata serialization excludes None values.
+    """
     # Create a Metadata instance with some fields set to None
     metadata = Metadata(title="Test Document", url=None, author="Test Author", publish_date=None)
     

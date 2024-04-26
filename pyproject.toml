@@ -21,6 +21,11 @@ transformers = "^4.39.3"
 sentence-transformers = "^2.6.1"
 marko = "^2.0.3"
 pdoc = "^14.4.0"
+litellm = "^1.35.26"
+beaupy = "^3.8.2"
+rich = "^13.7.1"
+click = "^8.1.7"
+pydantic-settings = "^2.2.1"
 
 [build-system]
 requires = ["poetry-core"]
@@ -29,7 +34,9 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.scripts]
 docs = "scripts.build_docs:main"
 serve = "scripts.serve_docs:main"
+frag = "frag.cli.frag:main"
 
 [tool_poetry_extra]
 oss = ["sentence-transformers"]
+
 
