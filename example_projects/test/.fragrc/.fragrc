@@ -1,9 +1,9 @@
 db:
-  path: ./db
+  db_path: ./db
   default_collection: default
 chunker:
   preserve_paragraphs: true
-  token_limit: 512
+  max_length: 512
   buffer_before: 0
   buffer_after: 0
 embeddings:

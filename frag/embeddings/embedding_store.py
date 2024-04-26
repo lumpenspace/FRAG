@@ -25,7 +25,7 @@ class EmbeddingStore(BaseModel):
     A class for storing and managing embeddings in a Chroma database.
 
     Attributes:
-        path (str): Path to the Chroma database.
+        db_path (str): Path to the Chroma database.
         collection_name (str): Name of the collection within the Chroma database.
         collection (chromadb.Collection): Chroma client for the database.
         embed_api (Type[EmbedAPI]|str): Embedding Source.
@@ -45,7 +45,7 @@ class EmbeddingStore(BaseModel):
         update_metadata: Updates the metadata for an embedding in the Chroma database.
         delete_embedding: Deletes an embedding from the Chroma database based on the chunk ID.
     """
-    path: str = Field(str(os.path.join(os.path.dirname(__file__), "chroma_db")), description="Path to the Chroma database")
+    db_path: str = Field(str(os.path.join(os.path.dirname(__file__), "chroma_db")), description="Path to the Chroma database")
     collection_name: str = Field(default="default_collection", description="Name of the collection")
     embed_api: Type[EmbedAPI]|str|EmbedAPI = Field(..., description="Embedding Source")
     chunk_settings: ChunkerSettings = Field(..., description="Chunking settings")
@@ -54,11 +54,11 @@ class EmbeddingStore(BaseModel):
     chunker: SourceChunker= None
     client: chromadb.PersistentClient= None
 
-    @field_validator('path')
+    @field_validator('db_path')
     @classmethod
     def validate_path(cls, v):
         """
-        Validates the path to the Chroma database and creates the directory if it does not exist.
+        Validates the db_path to the Chroma database and creates the directory if it does not exist.
         """
         if not os.path.exists(v):
             os.makedirs(v, exist_ok=True)
@@ -67,6 +67,9 @@ class EmbeddingStore(BaseModel):
     @field_validator('embed_api')
     @classmethod
     def validate_embeddings_model(cls, v):
+        """
+        Validates the embedding model and chunking settings.
+        """
         if not v:
             raise ValueError("Embedding model and chunking settings must be provided")
         if isinstance(v, EmbedAPI):
@@ -93,7 +96,7 @@ class EmbeddingStore(BaseModel):
             self.chunk_settings = ChunkerSettings(**self.chunk_settings)
 
         try:
-            self.client = chromadb.PersistentClient(path=self.path)
+            self.client = chromadb.PersistentClient(path=self.db_path)
         except Exception as e:
             logger.error("Error creating chromadb client: %s", e)
             raise e
@@ -105,9 +108,9 @@ class EmbeddingStore(BaseModel):
         except Exception as e:
             logger.error("Error creating chromadb collection: %s", e)
             raise e
-        
+
         if not hasattr(self.embed_api, 'max_tokens'):
-            raise ValueError("Embedding model %s does not have a max_tokens attribute", self.embed_api.__repr_name__)
+            raise ValueError(f"Embedding model {self.embed_api.__repr_name__()} does not have a max_tokens attribute")
 
         self.chunker = SourceChunker(settings=self.chunk_settings, embed_api=self.embed_api)
         return self
@@ -116,17 +119,17 @@ class EmbeddingStore(BaseModel):
     @computed_field
     def name(self) -> str:
         """Returns the name of the embedding model."""
-        return self.embed_api.name
+        return self.embed_api.__repr_name__()
 
 
     @property
     def chroma_collection(self):
-        if not os.path.exists(self.path):
-            os.makedirs(self.path, exist_ok=True)
-        if not os.access(self.path, os.W_OK):
+        if not os.path.exists(self.db_path):
+            os.makedirs(self.db_path, exist_ok=True)
+        if not os.access(self.db_path, os.W_OK):
             raise ValueError("Database path {self.path} is not writable")
         try:
-            client = chromadb.PersistentClient(path=self.path)
+            client = chromadb.PersistentClient(path=self.db_path)
             collection = client.get_or_create_collection(self.collection_name)
             return collection
         except Exception as e:

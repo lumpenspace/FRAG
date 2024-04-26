@@ -10,7 +10,7 @@
     "buffer_after": 10
   },
   "embeddings": {
-    "model": "text-embedding-3-large",
+    "model": "oai:text-embedding-3-large",
     "chunk_size": 10000,
     "chunk_overlap": 0    
   },

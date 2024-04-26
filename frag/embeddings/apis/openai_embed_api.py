@@ -1,3 +1,4 @@
+import os
 from typing import List, Optional
 from chromadb import Embeddings
 from chromadb.types import Vector
@@ -8,7 +9,7 @@ import tiktoken
 
 from .base_embed_api import EmbedAPI
 
-openaiembedding_models = ["text-embedding-ada-002", "text-embedding-large", "text-embedding-small"]
+openaiembedding_models = ["text-embedding-ada-002", "text-embedding-large", "text-embedding-small", "text-embedding-3-large", "text-embedding-3-small"]
 
 class OpenAIEmbedAPI(EmbedAPI):
     """
@@ -19,7 +20,7 @@ class OpenAIEmbedAPI(EmbedAPI):
     using OpenAI's API and a specified tokenizer.
     """
     name: str = Field("text-embedding-small", description="The name of the OpenAI embedding model")
-    api_key: str = Field(..., description="The API key for the OpenAI client")
+    api_key: str|None = Field(None, description="The API key for the OpenAI client")
     tokenizer: Optional[type(tiktoken.Encoding)] = Field(default=None, description="The tokenizer to use")
     openai_client: OpenAI = Field(default=None, description="The OpenAI client to use")
    
@@ -50,10 +51,12 @@ class OpenAIEmbedAPI(EmbedAPI):
     @model_validator(mode="before")
     @classmethod
     def validate_api_key(cls, values):
-        if not values.get("api_key"):
-            raise ValueError("OpenAI API key is required")
-        if (values["openai_client"] is None):
-            values["openai_client"] = OpenAI(api_key=values.get("api_key"))
+        key = values.get('api_key') or os.getenv("OPENAI_API_KEY")
+
+        if (values.get("openai_client") is None):
+            if not key:
+              raise ValueError("OpenAI API key is required")
+            values["openai_client"] = OpenAI(api_key=key)
         return values
 
     def encode(self, text: str) -> List[int]:

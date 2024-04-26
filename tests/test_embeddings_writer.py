@@ -13,7 +13,7 @@ def embeddings_writer(tmpdir):
     Create an EmbedWriter instance with a temporary directory as the store path.
     """
     store = EmbeddingStore(
-        path=str(tmpdir.join("test_db")),
+        db_path=str(tmpdir.join("test_db")),
         chunk_settings=ChunkerSettings(),
         embed_api=EmbedAPITest,
         collection_name = f"test_collection_{uuid.uuid4()}"
