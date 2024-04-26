@@ -1,4 +1,4 @@
 """
 Module for settings
 """
-from .settings import Settings, ChunkerSettings, EmbedSettings, DBSettings
+from .settings import Settings, ChunkerSettings, EmbedSettings, DBSettings, ModelSettings, SummarizerSettings
