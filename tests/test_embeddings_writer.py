@@ -2,7 +2,7 @@ import pytest
 import uuid
 
 from frag.embeddings import Metadata, EmbedWriter, EmbeddingStore
-from frag.settings import ChunkerSettings
+from frag.types import ChunkerSettings
 
 
 from tests.utils import EmbedAPITest

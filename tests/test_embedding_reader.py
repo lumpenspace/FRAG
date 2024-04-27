@@ -6,7 +6,7 @@ from frag.embeddings.embedding_store import EmbeddingStore
 from frag.embeddings.embeddings_metadata import Metadata
 from frag.embeddings.read.embed_reader import EmbeddingsReader
 from frag.embeddings.write.embed_writer import EmbedWriter
-from frag.settings import ChunkerSettings
+from frag.types import ChunkerSettings
 
 from tests.utils import EmbedAPITest
 

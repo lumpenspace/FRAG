@@ -1,7 +1,7 @@
 # pylint: disable=[missing-docstring,W0621:redefined-outer-name]
 
 from unittest.mock import mock_open, patch
-from frag.settings.settings import Settings
+from frag.types import Settings
 
 
 def test_default_settings_when_no_fragrc():

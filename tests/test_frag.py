@@ -1,14 +1,28 @@
 import pytest
 from unittest.mock import patch
 from frag.frag import Frag
-from frag.settings.settings import Settings
+from frag.types import Settings
 from frag.embeddings.write.embed_writer import EmbedWriter
 from frag.embeddings.read.embed_reader import EmbeddingsReader
 
 def test_initialization_with_default_settings():
-    with patch('frag.settings.settings.Settings') as mock_settings:
-        mock_settings.return_value = Settings()
-        frag_instance = Frag()
+    with patch('frag.types.Settings') as mock_settings:
+        mock_settings.return_value = {
+            'db': { 
+                'db_path': 'db',
+                'default_collection': 'custom_collection'
+            },
+            'chunker': {
+                'preserve_paragraphs': True,
+                'buffer_before': 10,
+                'buffer_after': 10,
+                'max_length': 1000
+            },
+            'embed': {
+                'model': 'oai:text-embedding-ada-002',
+            }
+        }
+        frag_instance = Frag(settings=mock_settings.return_value)
         assert isinstance(frag_instance, Frag)
         assert isinstance(frag_instance.settings, Settings)
 

@@ -25,15 +25,15 @@ class SentenceEmbedAPI(EmbedAPI):
         max_tokens: The maximum number of tokens to embed.
         model: The SentenceTransformer model to use.
     """
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     name: str = Field("all-MiniLM-L6-v2", description="The name of the HuggingFace embedding model")
     max_tokens: int = Field(default=512, description="The maximum number of tokens to embed")
     model: Optional[SentenceTransformer] = Field(..., description="The SentenceTransformer model to use")
 
-    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     @model_validator(mode="before")
     @classmethod
-    def validate_name(cls, v):
+    def validate_model(cls, v):
         if not SentenceTransformer:
             raise ValueError("SentenceTransformer not installed; use `poetry add -E oss` to install it and run open source models")
         try:

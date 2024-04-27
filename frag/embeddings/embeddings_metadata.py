@@ -11,11 +11,6 @@ class Metadata(BaseModel):
     """
     A model representing metadata for a document, including title, URL, author, and publish date.
     """
-    title: str = Field(..., description="Title of the document")
-    url: Optional[str] = Field(None, description="URL of the document")
-    author: str = Field(None, description="Author of the document")
-    publish_date: Optional[datetime] = Field(None, description="Publish date of the document")
-
     model_config = ConfigDict(
         extra="allow",
         arbitrary_types_allowed=True,
@@ -24,6 +19,12 @@ class Metadata(BaseModel):
             "validate_types": ["string", "number"]
         }
     )
+    title: str = Field(..., description="Title of the document")
+    url: Optional[str] = Field(None, description="URL of the document")
+    author: str = Field(None, description="Author of the document")
+    publish_date: Optional[datetime] = Field(None, description="Publish date of the document")
+
+
 
     def to_dict(self):
         """

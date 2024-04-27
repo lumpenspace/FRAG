@@ -6,7 +6,7 @@ from frag.embeddings.embedding_store import EmbeddingStore
 from frag.embeddings.read.embed_reader import EmbeddingsReader
 from frag.embeddings.write.embed_writer import EmbedWriter
 
-from frag.settings.settings import Settings
+from frag.types.settings import Settings
 
 class Frag:
     """

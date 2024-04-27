@@ -9,7 +9,7 @@ from frag.embeddings.apis.base_embed_api import DBEmbedFunction
 from frag.embeddings.embeddings_metadata import Metadata
 from frag.embeddings.apis import EmbedAPI, get_embed_api
 from frag.embeddings.chunks import SourceChunker
-from frag.settings import ChunkerSettings
+from frag.types import ChunkerSettings
 
 logger = logging.getLogger(__name__)
 

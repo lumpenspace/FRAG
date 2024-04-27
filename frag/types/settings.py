@@ -1,8 +1,8 @@
-from pydantic import root_validator
+from pydantic import model_validator
 from typing import List
 from pydantic_settings import BaseSettings
 from litellm.types.completion import CompletionRequest
-from litellm import get_supported_openai_params
+from litellm.utils import get_supported_openai_params, get_model_info
 
 from openai.types.chat import ChatCompletionMessage
 import os
@@ -32,20 +32,28 @@ class ModelSettings(CompletionRequest):
     def model_dump(self):
         return self.model_dump(exclude_unset=True, exclude_none=True)
     
-    @root_validator(pre=True)
+    @model_validator(mode="before")
+    @classmethod
     def validate_model(cls, values):
         other_values = {k: v for k, v in values.items() if k not in ["model", "messages"]}
         # check if values are supported
-        supported_params = get_supported_openai_params(values["model"])
+        model_string = values.get('model', 'gpt-3.5-turbo')
+        info = get_model_info(model_string)
+        supported_params = get_supported_openai_params(model_string, info.get("litellm_provider"))
         for k, v in other_values.items():
             if k not in supported_params:
-                raise ValueError(f"Unsupported parameter {k} for model {values['model']}")
+                raise ValueError(f"Unsupported parameter {k} for model {values.get('model', 'gpt-3.5-turbo')}")
         return values
 
 class SummarizerSettings(BaseSettings):
     system_message_template: str|None = None
     user_message_template: str|None = None
-    model_settings: ModelSettings = ModelSettings()
+    llm_model: ModelSettings = ModelSettings()
+
+class InterfaceSettings(BaseSettings):
+    system_message_template: str|None = None
+    user_message_template: str|None = None
+    llm_model: ModelSettings = ModelSettings()
 
 
 class Settings(BaseSettings):
@@ -83,7 +91,8 @@ class Settings(BaseSettings):
     def default_collection(self):
         return self.db.default_collection
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
+    @classmethod
     def load_default_settings(cls, values):
         """
         Load settings from .fragrc file if it exists and merge with default settings.
