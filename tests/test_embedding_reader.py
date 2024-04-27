@@ -10,20 +10,21 @@ from frag.types import ChunkerSettings
 
 from tests.utils import EmbedAPITest
 
+
 @pytest.fixture
 def embeddings_reader(tmpdir):
     store = EmbeddingStore(
         db_path=str(tmpdir.join("test_db")),
         chunk_settings=ChunkerSettings(),
         embed_api=EmbedAPITest,
-        collection_name = f"test_collection_{uuid.uuid4()}"  
+        collection_name=f"test_collection_{uuid.uuid4()}",
     )
     embeddings_writer = EmbedWriter(store=store)
     text = "This is a sample document."
     metadata = Metadata(
         title="title",
-        source="test",
-        source_id="1",
+        author="author",
+        publish_date="2023-01-01",
         url="https://example.com",
     )
 
@@ -31,8 +32,8 @@ def embeddings_reader(tmpdir):
 
     return EmbeddingsReader(store=store)
 
-def test_get_similar(embeddings_reader:EmbeddingsReader):
+
+def test_get_similar(embeddings_reader: EmbeddingsReader):
     """Test fetching similar embeddings from the store."""
     similar_embeddings = embeddings_reader.get_similar(text="my_text", n_results=1)
     assert similar_embeddings is not None, "Failed to fetch similar embeddings"
-
