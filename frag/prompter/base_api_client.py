@@ -1,5 +1,4 @@
 
-from pydantic import BaseModel
 import logging
 from litellm.main import completion
 from litellm.types.completion import CompletionRequest
@@ -10,6 +9,7 @@ import jinja2
 
 class BaseApiClient():
     settings: ModelSettings
+    client_type: None
     system_template: jinja2.Template
     user_template: jinja2.Template
     logger: logging.Logger
@@ -27,7 +27,12 @@ class BaseApiClient():
         )
         completion(request)
 
+    def render(self, messages:List[Message], **kwargs):
+        raise NotImplementedError
+
     def load_templates(self):
+        if self.client_type is None:
+            raise ValueError("[dev] client_type must be set")
         if self.settings.system_message_template and self.settings.user_message_template:
             try:
                 self.system_template = jinja2.Template(open(self.settings.system_message_template).read())

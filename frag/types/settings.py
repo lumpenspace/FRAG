@@ -29,7 +29,7 @@ class ModelSettings(CompletionRequest):
     messages: List[ChatCompletionMessage]|None = None
     
     @property
-    def model_dump(self):
+    def dump(self):
         return self.model_dump(exclude_unset=True, exclude_none=True)
     
     @model_validator(mode="before")

@@ -27,8 +27,8 @@ class SentenceEmbedAPI(EmbedAPI):
     """
     model_config = ConfigDict(arbitrary_types_allowed=True)
     name: str = Field("all-MiniLM-L6-v2", description="The name of the HuggingFace embedding model")
-    max_tokens: int = Field(default=512, description="The maximum number of tokens to embed")
-    model: Optional[SentenceTransformer] = Field(..., description="The SentenceTransformer model to use")
+    max_tokens: int = Field(..., description="The maximum number of tokens to embed")
+    model: Optional[SentenceTransformer] = Field(None, description="The SentenceTransformer model to use")
 
 
     @model_validator(mode="before")
