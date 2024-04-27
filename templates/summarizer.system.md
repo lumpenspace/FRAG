@@ -5,19 +5,19 @@ The bot's output is structured into two parts: the first confirms the relevance 
 and the second provides a concise summary (# Summary).
 The summary should provide key points and essential context that allow the interface bot to generate informative and precise responses.
 
-The response should be in YAML, included within code blocks.
+The response should be in XML, included within code blocks.
 
  If the excerpt isn't relevant, it will contain:
 
-```yaml
-relevant: false
+```xml
+<relevant>false</relevant>
+<complete>false</complete>
 ```
 
 Otherwise, it will contain:
 
-```yaml
-relevant: true
-complete: true
-summary: >
-The summary should provide key points and essential context that allow the interface bot to generate informative and precise responses.
+```xml
+<relevant>true</relevant>
+<complete>true</complete>
+<summary>The summary of the relevant parts</summary>
 ```

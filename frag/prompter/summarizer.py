@@ -5,7 +5,7 @@ from litellm import completion
 from litellm.types.completion import CompletionRequest
 from typing import List
 from openai.types.chat import ChatCompletionMessage as Message, ChatCompletionRole as Role
-from ..settings import SummarizerSettings, ModelSettings
+from ..settings import SummarizerSettings
 import jinja2
 
 logger = logging.getLogger(__name__)
@@ -52,15 +52,3 @@ class Summarizer(BaseModel):
     def _render_user(self, latest_messages:List[Message], **kwargs) -> Message:
         return Message(self.user_template.render(latest_messages=latest_messages, **kwargs), role=Role.USER)
 
-from ..settings import Settings
-
-class Prompter:
-    def __init__(self, settings: Settings):
-        self.settings = settings
-        self.summarizer = Summarizer(settings=self.settings.summarizer)
-
-    def summarise(self, messages, **kwargs):
-        return {
-            'system': self.summarizer.render_system(messages, **kwargs),
-            'user': self.summarizer.render_user(messages, **kwargs)
-        }
