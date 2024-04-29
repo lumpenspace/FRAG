@@ -41,7 +41,7 @@ class SourceChunker(BaseModel):
     )
     embed_api: EmbedAPI = Field(..., description="The embedding model to use")
     buffered_max_tokens: int = Field(
-        ...,
+        default=0,
         description="The maximum number of tokens allowed in a chunk, adjusted for\
              buffer settings",
     )

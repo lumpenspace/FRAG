@@ -1,12 +1,12 @@
 import os
 from chromadb.api import ClientAPI
-from chromadb.api.types import Embeddable, EmbeddingFunction
 from chromadb import Collection
+from chromadb.api.types import QueryResult, Embeddings
 from chromadb.errors import ChromaError, InvalidCollectionException
 from chromadb import PersistentClient
 import logging
 from pydantic import BaseModel, Field, field_validator, model_validator, computed_field
-from typing import List, Type
+from typing import List
 
 from frag.embeddings.embeddings_metadata import Metadata
 from frag.embeddings.apis import EmbedAPI, get_embed_api
@@ -126,7 +126,8 @@ class EmbeddingStore(BaseModel):
 
         if not hasattr(self.embed_api, "max_tokens"):
             raise ValueError(
-                f"Embedding model {self.embed_api.__repr_name__()} does not have a max_tokens attribute"
+                f"Embedding model {self.embed_api.__repr_name__()} \
+                    does not have a max_tokens attribute"
             )
 
         self.chunker = SourceChunker(
@@ -165,13 +166,11 @@ class EmbeddingStore(BaseModel):
     def query(self):
         return self.collection.query
 
-    def fetch(self, text: str) -> List[float]:
+    def fetch(self, text: str) -> Embeddings:
         """Returns the embedding vector for the given text."""
-        return self.embed_api.embed(text)
+        return self.embed_api.embed().embed_with_retries(text)
 
-    def find_similar(
-        self, text: str | List[str], n_results: int = 1
-    ) -> chromadb.QueryResult:
+    def find_similar(self, text: str | List[str], n_results: int = 1) -> QueryResult:
         """Returns the most similar embeddings to the given text."""
         return self.collection.query(
             query_texts=text if isinstance(text, list) else [text], n_results=n_results
@@ -182,8 +181,9 @@ class EmbeddingStore(BaseModel):
         Updates the metadata for an embedding in the Chroma database.
         """
         # if the current metadata has a different schema, throw an error.
-        result = self.chroma_collection.get(ids=["chunk_id"]).get(chunk_id)
-        if result.metadata and not metadata.model_validate(result.metadata):
+        result = self.chroma_collection.get(ids=[chunk_id])["metadatas"]
+
+        if result and not metadata.model_validate(result[0]):
             raise ValueError(
                 "The metadata schema is different from the current metadata schema"
             )

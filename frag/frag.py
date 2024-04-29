@@ -39,7 +39,7 @@ class Frag:
 
         return EmbeddingStore(
             db_path=self.settings.db.db_path,
-            collection_name=self.settings.db.default_collection,
+            collection=self.settings.db.default_collection,
             embed_api=embedding_settings["model"],
             chunk_settings=chunk_settings,
         )

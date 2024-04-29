@@ -73,7 +73,8 @@ class Chunk(BaseModel):
         cls, source_chunk: SourceChunk, metadata: ChunkMetadata, part: int
     ):
         """
-        Creates a Chunk instance from a SourceChunk instance, incorporating additional metadata and generating a unique ID.
+        Creates a Chunk instance from a SourceChunk instance,
+        incorporating additional metadata and generating a unique ID.
 
         Parameters:
             source_chunk (SourceChunk): The source chunk to convert.
