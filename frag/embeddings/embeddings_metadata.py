@@ -1,9 +1,9 @@
 from datetime import date
-from flatten_dict import flatten_dict
+from flatten_dict import flatten
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from typing import Union, Optional
 
-from typing import Any, Dict, Type
+from typing import Any, Dict
 
 from datetime import datetime
 
@@ -50,24 +50,11 @@ class Metadata(BaseModel):
         """
         return self.model_dump_json()
 
-    @staticmethod
-    def schema_extra(schema: Dict[str, Any], model: Type["Metadata"]) -> None:
-        """
-        Modifies the schema based on the model configuration, removing titles and validating field types.
-        """
-        if model.config_dict.json_schema_extra.get("remove_titles", False):
-            for prop in schema.get("properties", {}).values():
-                prop.pop("title", None)
-        if "validate_types" in model.config_dict.json_schema_extra:
-            allowed_types = model.config_dict.json_schema_extra["validate_types"]
-            for prop in schema.get("properties", {}).values():
-                if prop["type"] not in allowed_types:
-                    raise ValueError("Only string or number fields are allowed.")
-
 
 class ChunkMetadata(Metadata):
     """
-    A model representing metadata for a chunk of a document, including part number, total parts, and extra metadata.
+    A model representing metadata for a chunk of a document, including part number, total parts,
+    and extra metadata.
     """
 
     part: int = Field(..., description="Part of the document")
@@ -83,15 +70,16 @@ class ChunkMetadata(Metadata):
         Combines chunk-specific metadata with document-level metadata for database saving.
         """
         combined_metadata = {
-            **self.model_dump(exclude=self.model_dump().keys()),
-            **document_metadata.model_dump(exclude=self.model_dump().keys()),
+            **self.model_dump(),
+            **document_metadata.model_dump(),
         }
         return combined_metadata
 
     @classmethod
     def separate_from_combined_metadata(cls, combined_metadata: Dict[str, Any]):
         """
-        Separates combined metadata back into document-level and chunk-specific metadata when reading from the database.
+        Separates combined metadata back into document-level and chunk-specific metadata
+        when reading from the database.
         """
         document_metadata_keys = Metadata.model_fields.keys()
         document_metadata = {
@@ -112,15 +100,15 @@ class ChunkMetadata(Metadata):
         Flattens the extra metadata dictionary.
         """
         if isinstance(v, dict):
-            return flatten_dict(v)
+            return flatten(v)
         return v
 
     def dict(self, *args, **kwargs):
         """
         Converts the model instance into a dictionary, with extra metadata flattened.
         """
-        data = super().model_dump()(*args, **kwargs)
-        data["extra_metadata"] = flatten_dict()(data["extra_metadata"])
+        data = super().model_dump(*args, **kwargs)
+        data["extra_metadata"] = flatten(data["extra_metadata"])
         return data
 
     @classmethod

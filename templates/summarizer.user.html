@@ -1,19 +1,24 @@
 The user's latest interaction with the Interface bot have been:
 
-<% for message in latest_messages %>
+{% for message in latest_messages %}
 [{{message.role}}]: {{message.content}}
-<% endfor %>
+{% endfor %}
+
+And here is a document from our resource library.
+
+<document>
+<title>{{document.title}}</title>
+<url>{{document.url}}</url>
+<body>{{document.body}}</body>
+</document>
+
 
 Determine whether this excerpt will help you answer the user's question. If it will, reply with the following yaml:
 
-```xml
 <relevant>true</relevant>
 <complete>true</complete><!-->If it answer the question by itself, otherwise false<-->
 <summary>The summary of the relevant parts</summary>
-```
 
 Otherwise, reply with the following yaml:
 
-```xml
 <relevant>false</relevant>
-```

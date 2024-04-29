@@ -8,11 +8,13 @@ from frag.embeddings.write.embed_writer import EmbedWriter
 
 from frag.types.settings import Settings
 
+
 class Frag:
     """
     Main class for the fRAG library
     """
-    def __init__(self, settings: Settings|dict = None):
+
+    def __init__(self, settings: Settings | dict | None = None):
         if settings is None:
             settings = Settings()
         if isinstance(settings, dict):
@@ -46,7 +48,9 @@ class Frag:
         """
         Returns an EmbedWriter instance
         """
-        return EmbedWriter(store=self.embedding_store, chunker=self.embedding_store.chunker)
+        return EmbedWriter(
+            store=self.embedding_store, chunker=self.embedding_store.chunker
+        )
 
     def chunker(self):
         """

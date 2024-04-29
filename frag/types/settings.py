@@ -2,19 +2,11 @@ from pydantic import model_validator
 from pydantic_settings import BaseSettings
 from litellm.types.completion import CompletionRequest
 from litellm.utils import get_supported_openai_params, get_model_info
-from openai.types.chat import (  # noqa
-    ChatCompletionSystemMessageParam as SystemMessage,
-    ChatCompletionUserMessageParam as UserMessage,
-    ChatCompletionAssistantMessageParam as AssistantMessage,
-    ChatCompletionMessageParam as Message,
-    ChatCompletionFunctionMessageParam as FunctionMessage,
-    ChatCompletionToolChoiceOptionParam as ToolChoiceOption,
-    ChatCompletionToolParam as ToolMessage,
-)
 
 import os
 import yaml
 from pathlib import Path
+from typing import Literal
 
 
 class DBSettings(BaseSettings):
@@ -28,7 +20,7 @@ class EmbedSettings(BaseSettings):
     chunk_overlap: int = 0
 
 
-class ChunkerSettings(BaseSettings):
+class ChunkerSettings(EmbedSettings):
     preserve_sentences: bool = False
     preserve_paragraphs: bool = True
     max_length: int = 512
@@ -41,9 +33,14 @@ class LLMSettings(CompletionRequest):
     interface_bot: "ResponderSettings"
     summarizer_bot: "ResponderSettings"
 
-    @property
+    def bot_settings(self, bot_type: Literal["interface", "summarizer"]):
+        return self[f"{bot_type}_bot"].model_dump(exclude_unset=True, exclude_none=True)
+
     def dump(self):
         return self.model_dump(exclude_unset=True, exclude_none=True)
+
+    def __getitem__(self, item):
+        return self.model_dump(exclude_unset=True, exclude_none=True)[item]
 
     @model_validator(mode="before")
     @classmethod
@@ -64,8 +61,7 @@ class LLMSettings(CompletionRequest):
 
 
 class ResponderSettings(LLMSettings):
-    system_message_template: str | None = None
-    user_message_template: str | None = None
+    template_dir: str = os.path.join(os.path.dirname(__file__), "templates")
 
 
 class Settings(BaseSettings):

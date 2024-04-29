@@ -1,10 +1,11 @@
 """
 .. include:: ../README.md
 """
-from dotenv import load_dotenv
 
-load_dotenv()  # take environment variables from .env.
+import frag.load_dotenv
 import frag.embeddings
-from frag.types import settings
 import frag.types
+import frag.prompter
+import frag.frag
 
+Frag = frag.frag.Frag
