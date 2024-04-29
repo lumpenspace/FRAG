@@ -1,6 +1,6 @@
-from typing import Any, Dict, List, TypeVar, Protocol, Callable
+from typing import List, TypeVar, Protocol, Callable
 from pydantic import BaseModel, Field
-from chromadb import Documents, Embeddings
+from chromadb import Documents, Embeddings, EmbeddingFunction
 
 Embeddable = Documents
 D = TypeVar("D", bound=Embeddable, contravariant=True)
@@ -45,7 +45,7 @@ class EmbedAPI(BaseModel):
         """Takes a list of tokens and returns a text string."""
         raise NotImplementedError("Subclasses must implement the `decode`")
 
-    def embed(self, input: List[str]) -> Dict[str, Any]:
+    def embed(self) -> EmbeddingFunction:
         """
         Generates an embedding for the given text.
 

@@ -3,9 +3,10 @@ This module allows for embedding with HuggingFace models.
 """
 
 from typing import List
-from chromadb import Embeddings
 from pydantic import ConfigDict, Field, model_validator
 from logging import getLogger
+from chromadb.api.types import EmbeddingFunction
+from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
 
 logger = getLogger(__name__)
 
@@ -60,8 +61,8 @@ class SentenceEmbedAPI(EmbedAPI):
     def decode(self, tokens: List[int]) -> str:
         return self.model.tokenizer.decode(tokens)
 
-    def embed(self, input: List[str]) -> List[Embeddings]:
+    def embed(self) -> EmbeddingFunction:
         try:
-            return self.model.encode(input)
+            return SentenceTransformerEmbeddingFunction(model_name=self.model)
         except Exception as e:
             raise ValueError(f"Error embedding text with HF model: {e}")

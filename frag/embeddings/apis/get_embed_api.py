@@ -22,6 +22,6 @@ def get_embed_api(embed_api: EmbedAPI | str) -> EmbedAPI:
     if isinstance(embed_api, str):
         if embed_api.startswith("oai:"):
             return OAIEmbedAPI(name=embed_api.replace("oai:", ""))
-        return SentenceEmbedAPI(name=embed_api)
+        return SentenceEmbedAPI(name=embed_api, model=embed_api)
     if issubclass(embed_api, EmbedAPI):
         return embed_api()

@@ -1,7 +1,10 @@
 import os
 from typing import List
 from pydantic import Field, field_validator, model_validator
-from openai import OpenAI, OpenAIError
+from openai import OpenAI
+import chromadb.utils.embedding_functions as embedding_functions
+from chromadb.api.types import EmbeddingFunction
+
 import tiktoken
 
 
@@ -74,18 +77,11 @@ class OAIEmbedAPI(EmbedAPI):
     def encode(self, text: str) -> List[int]:
         return self.tokenizer.encode(text=text)
 
-    def embed(self, input: list[str]) -> List[List[float]]:
-        try:
-            embedding_object = self.openai_client.embeddings.create(
-                input=input, model=self.name
-            )
-        except OpenAIError as e:
-            raise ValueError(f"OpenAiEmbeddingsModel: error embedding {input} {e}")
-        except Exception as e:
-            raise ValueError(
-                f"OpenAiEmbeddingsModel: unexpected error embedding text: {e}"
-            )
-        return [data.embedding for data in embedding_object.data]
+    def embed(self) -> EmbeddingFunction:
+        return embedding_functions.OpenAIEmbeddingFunction(
+            api_key=os.environ.get("OPENAI_API_KEY"),
+            model_name="text-embedding-3-small",
+        )
 
     def decode(self, tokens: List[int]) -> str:
         return self.tokenizer.decode(tokens)
