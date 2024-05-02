@@ -4,12 +4,13 @@ Base API client, from which both the prompter and the summariser inherit.
 
 import logging
 import os
-from typing import List
+from typing import List, Dict, Any
 
 import jinja2
 from litellm.main import ModelResponse, completion
 
 from frag.typedefs import LLMSettings, MessageParam, Role, SystemMessage, UserMessage
+from frag.typedefs.llm_model_settings import LLMModelSettings
 
 
 class BaseBot:
@@ -37,17 +38,18 @@ class BaseBot:
         if self.client_type is None:
             raise ValueError("client_type must be provided")
         self.logger = logging.getLogger(__name__)
-        self.settings = settings
-        self.responder = settings["responder"]
+        self.settings: LLMModelSettings = settings
         self.load_templates(template_dir)
 
-    def run(self, messages: List[MessageParam], **kwargs) -> ModelResponse:
+    def run(
+        self, messages: List[MessageParam], **kwargs: Dict[str, Any]
+    ) -> ModelResponse:
         """
         Processes the given messages and performs completion using the LLM model.
 
         :param messages: List of ChatCompletionMessage objects to be processed.
         """
-        if self.settings.llm is None:
+        if self.settings. is None:
             raise ValueError("llm must be provided")
         if len(messages) == 0 or messages is None:
             raise ValueError("messages must be provided")
@@ -57,7 +59,7 @@ class BaseBot:
             ]
 
             return ModelResponse(
-                completion(self.settings.llm, messages=rendered_messages)
+                completion(self.settings., messages=rendered_messages)
             )
         except Exception as e:
             self.logger.error(f"Error during completion: {e}")
@@ -105,7 +107,7 @@ class BaseBot:
             raise e
 
     def _render_message(
-        self, latest_messages: List[MessageParam], role: Role, **kwargs
+        self, latest_messages: List[MessageParam], role: Role, **kwargs: Dict[str, Any]
     ) -> MessageParam:
         """
         Renders a message based on the role and the latest messages.

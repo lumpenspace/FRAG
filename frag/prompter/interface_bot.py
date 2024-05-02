@@ -14,7 +14,7 @@ from litellm import completion, ModelResponse
 
 from frag.typedefs import LLMSettings, MessageParam, Note
 
-from .base_api_client import BaseBot
+from .base_bot import BaseBot
 
 
 class InterfaceBot(BaseBot):
@@ -24,7 +24,7 @@ class InterfaceBot(BaseBot):
     It is called by `prompter.py`.
     """
 
-    client_type: Literal["prompter"] = "prompter"
+    client_type: Literal["interface"] = "interface"
     settings: LLMSettings
     system_template: jinja2.Template
     user_template: jinja2.Template

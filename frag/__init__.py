@@ -2,8 +2,13 @@
 .. include:: ../README.md
 """
 
-import frag.load_dotenv
-import frag.embeddings
-import frag.typedefs
-import frag.prompter
-import frag.frag
+from frag import typedefs
+from frag.frag import Frag
+from frag.embeddings import EmbeddingStore
+from frag.prompter import Prompter
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
+__all__ = ["Frag", "typedefs", "EmbeddingStore", "Prompter"]

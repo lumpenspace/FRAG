@@ -8,7 +8,7 @@ frag init
 ```
 """
 
-from typing import TypedDict
+from typing import TypedDict, Dict, Any
 from pathlib import Path
 from logging import getLogger, Logger
 import yaml
@@ -20,7 +20,7 @@ from .llm_settings import LLMSettings
 
 SettingsDict = TypedDict(
     "SettingsDict",
-    {"embed": dict, "llm": dict},
+    {"embed": Dict[str, Any], "llm": Dict[str, Any]},
 )
 
 logger: Logger = getLogger(__name__)
@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     embed: EmbedSettings
     llm: LLMSettings
 
-    def __new__(cls, *args, **kwargs) -> "Settings":
+    def __new__(cls, *args: Any, **kwargs: Any) -> "Settings":
         if not hasattr(cls, "instance"):
             logger.debug("Creating a new instance of the Settings class.")
             cls._instance: Settings | None = super().__new__(cls)

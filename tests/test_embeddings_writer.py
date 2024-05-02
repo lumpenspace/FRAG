@@ -1,7 +1,7 @@
 import pytest
 import uuid
 
-from frag.embeddings import Metadata, EmbedWriter, EmbeddingStore
+from frag.embeddings import ChunkInfo, EmbedWriter, EmbeddingStore
 from frag.types import ChunkerSettings
 
 
@@ -27,7 +27,7 @@ def test_create_embeddings_for_document(embeddings_writer):
     Test that embeddings are created for a document and stored in the database.
     """
     text = "This is a sample document."
-    metadata = Metadata(
+    metadata = ChunkInfo(
         title="title",
         author="author",
         publish_date="2023-01-01",
@@ -46,7 +46,7 @@ def test_metadata_serialization_excludes_none():
     Test that the metadata serialization excludes None values.
     """
     # Create a Metadata instance with some fields set to None
-    metadata = Metadata(
+    metadata = ChunkInfo(
         title="Test Document", url=None, author="Test Author", publish_date=None
     )
 

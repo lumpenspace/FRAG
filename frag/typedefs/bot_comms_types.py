@@ -33,3 +33,16 @@ class Note(BaseModel):
     title: str
     summary: str
     complete: bool
+
+
+__all__: list[str] = [
+    "Note",
+    "Message",
+    "AssistantMessage",
+    "UserMessage",
+    "MessageParam",
+    "Role",
+    "SystemMessage",
+    "FunctionMessage",
+    "CompletionParams",
+]

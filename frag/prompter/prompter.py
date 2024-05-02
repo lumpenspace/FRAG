@@ -2,8 +2,8 @@ from logging import Logger, getLogger
 from typing import List
 from litellm import Choices
 from frag.typedefs import LLMSettings
-from .summarizer import SummarizerBot
-from .interface import InterfaceBot
+from .summarizer_bot import SummarizerBot
+from .interface_bot import InterfaceBot
 
 
 class Prompter:

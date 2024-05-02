@@ -4,9 +4,9 @@ It uses internal methods to render system and user messages based on
 the latest messages.
 """
 
-from typing import List, Literal
+from typing import List, Literal, Dict, Any
 from frag.typedefs import LLMSettings, MessageParam, Document, DocMeta
-from .base_api_client import BaseBot
+from .base_bot import BaseBot
 
 
 class SummarizerBot(BaseBot):
@@ -22,7 +22,12 @@ class SummarizerBot(BaseBot):
         super().__init__(settings, template_dir=template_dir)
 
     def _render(
-        self, messages: List[MessageParam], document: Documents, doc_meta: DocMeta
+        self,
+        *_,
+        messages: List[MessageParam],
+        document: Document,
+        doc_meta: DocMeta,
+        **kwargs: Dict[str, Any]
     ) -> List[MessageParam]:
         return [
             self._render_message(messages, role="system", **kwargs),

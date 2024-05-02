@@ -19,6 +19,8 @@ bots:
 are bot specific settings. If a bot specific setting is not present, the default one is used.
 """
 
+from typing import Dict, Any
+
 from .llm_model_settings import LLMModelSettings
 
 
@@ -32,14 +34,17 @@ class LLMSettings(LLMModelSettings):
 
     @classmethod
     def from_dict(
-        cls, interface: dict | None = None, summarizer: dict | None = None, **kwargs
+        cls,
+        interface_bot: Dict[str, Any] | None = None,
+        summarizer_bot: Dict[str, Any] | None = None,
+        **kwargs: Dict[str, Any]
     ) -> "LLMSettings":
         """
         Create an LLMSettings object from a dictionary.
         """
-        interface = interface or dict()
-        summarizer = summarizer or dict()
-        default_settings: dict = kwargs
+        interface: Dict[str, Any] = interface_bot or dict()
+        summarizer: Dict[str, Any] = summarizer_bot or dict()
+        default_settings: Dict[str, Any] = kwargs
         return cls(
             interface_bot=LLMModelSettings(**default_settings, **interface),
             summarizer_bot=LLMModelSettings(**default_settings, **summarizer),

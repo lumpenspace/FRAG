@@ -1,13 +1,14 @@
-db:
+embed:
+  api_name: oai:text-embedding-3-large
   db_path: ./db
   default_collection: default
-chunker:
-  preserve_paragraphs: true
-  max_length: 512
-  buffer_before: 0
-  buffer_after: 0
-embed:
-  model: oai:text-embedding-3-large
-  chunk_size: 10000
-  chunk_overlap: 0
-
+  collection_name: default_collection
+  chunker:
+    preserve_paragraphs: true
+    max_length: 512
+    buffer_before: 0
+    buffer_after: 0
+bots:
+  api: gpt3-turbo
+  interface:
+    model: gpt4

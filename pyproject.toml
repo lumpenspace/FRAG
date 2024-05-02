@@ -30,11 +30,4 @@ docs = "scripts.build_docs:main"
 serve = "scripts.serve_docs:main"
 frag = "frag.cli.frag:main"
 
-[tool_poetry_extra]
-oss = ["sentence-transformers"]
-
-[tool.poetry.testing]
-pytest = "^8.1.1"
-pytest-mock = "^3.14.0"
-
 
