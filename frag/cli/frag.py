@@ -1,4 +1,5 @@
 """
+
 The main CLI entrypoint for frag.
 """
 import click

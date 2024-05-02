@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 
 import hashlib
 
-from frag.embeddings.embeddings_metadata import Metadata, ChunkMetadata
+from frag.embeddings.embeddings_metadata import ChunkInfo, ChunkMetadata
 
 
 class SourceChunk(BaseModel):
@@ -49,7 +49,7 @@ class Chunk(BaseModel):
     """
 
     text: str = Field(..., description="Text of the chunk")
-    metadata: Metadata = Field(..., description="Metadata of the chunk")
+    metadata: ChunkInfo = Field(..., description="Metadata of the chunk")
     id: str = Field(..., description="ID of the chunk")
 
     @classmethod

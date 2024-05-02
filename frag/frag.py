@@ -6,7 +6,7 @@ from frag.embeddings.embedding_store import EmbeddingStore
 from frag.embeddings.read.embed_reader import EmbeddingsReader
 from frag.embeddings.write.embed_writer import EmbedWriter
 
-from frag.types.settings import Settings
+from frag.typedefs.llm_settings import Settings
 
 
 class Frag:
@@ -24,24 +24,12 @@ class Frag:
         self.embedding_store = self._create_embedding_store()
 
     def _create_embedding_store(self):
-        chunk_settings = {
-            "preserve_paragraphs": self.settings.chunker.preserve_paragraphs,
-            "max_length": self.settings.chunker.max_length,
-            "buffer_before": self.settings.chunker.buffer_before,
-            "buffer_after": self.settings.chunker.buffer_after,
-        }
-
-        embedding_settings = {
-            "model": self.settings.embed.model,
-            "chunk_size": self.settings.embed.chunk_size,
-            "chunk_overlap": self.settings.embed.chunk_overlap,
-        }
 
         return EmbeddingStore(
             db_path=self.settings.db.db_path,
-            collection=self.settings.db.default_collection,
-            embed_api=embedding_settings["model"],
-            chunk_settings=chunk_settings,
+            collection_name=self.settings.db.default_collection,
+            embed_settings=self.settings.embed,
+            chunker_settings=self.settings.chunker,
         )
 
     def writer(self):

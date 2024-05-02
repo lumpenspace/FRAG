@@ -1,15 +1,17 @@
 from typing import List, TypeVar, Protocol, Callable
 from pydantic import BaseModel, Field
 from chromadb import Documents, Embeddings, EmbeddingFunction
+from chromadb.types import EmbeddingRecord
+
 
 Embeddable = Documents
-D = TypeVar("D", bound=Embeddable, contravariant=True)
+D = TypeVar("D", bound=Embeddable)
 
 
 class DBEmbedFunction(Protocol[D]):
-    embed: Callable
+    embed: Callable[[D], Embeddings]
 
-    def __init__(self, embed) -> None:
+    def __init__(self, embed: Callable[[D], Embeddings]) -> None:
         self.embed = embed
 
     def __call__(self, input: D) -> Embeddings:
@@ -45,7 +47,8 @@ class EmbedAPI(BaseModel):
         """Takes a list of tokens and returns a text string."""
         raise NotImplementedError("Subclasses must implement the `decode`")
 
-    def embed(self) -> EmbeddingFunction:
+    @property
+    def embed_function(self) -> EmbeddingFunction[Documents]:
         """
         Generates an embedding for the given text.
 

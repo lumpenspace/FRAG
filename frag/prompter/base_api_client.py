@@ -1,18 +1,18 @@
+"""
+Base API client, from which both the prompter and the summariser inherit.
+"""
+
 import logging
 import os
-from litellm.main import completion
 from typing import List
-from frag.types import (
-    LLMSettings,
-    MessageParam,
-    Role,
-    SystemMessage,
-    UserMessage,
-)
+
 import jinja2
+from litellm.main import ModelResponse, completion
+
+from frag.typedefs import LLMSettings, MessageParam, Role, SystemMessage, UserMessage
 
 
-class BaseApiClient:
+class BaseBot:
     """
     Base API client class that handles interactions with the LLM model.
     """
@@ -22,8 +22,10 @@ class BaseApiClient:
     system_template: jinja2.Template
     user_template: jinja2.Template
     logger: logging.Logger
+    messages: List[MessageParam]
+    responder: str
 
-    def __init__(self, settings: LLMSettings, template_dir: str):
+    def __init__(self, settings: LLMSettings, template_dir: str) -> None:
         """
         Initializes the BaseApiClient with the given settings, template paths, and client type.
 
@@ -39,7 +41,7 @@ class BaseApiClient:
         self.responder = settings["responder"]
         self.load_templates(template_dir)
 
-    def run(self, messages: List[MessageParam], **kwargs):
+    def run(self, messages: List[MessageParam], **kwargs) -> ModelResponse:
         """
         Processes the given messages and performs completion using the LLM model.
 
@@ -54,7 +56,9 @@ class BaseApiClient:
                 msg for msg in self._render(messages, **kwargs)
             ]
 
-            completion(self.settings.llm, messages=rendered_messages)
+            return ModelResponse(
+                completion(self.settings.llm, messages=rendered_messages)
+            )
         except Exception as e:
             self.logger.error(f"Error during completion: {e}")
             raise
@@ -69,7 +73,7 @@ class BaseApiClient:
         """
         raise NotImplementedError
 
-    def load_templates(self, template_dir: str):
+    def load_templates(self, template_dir: str) -> None:
         """
         Loads the message templates from the specified paths.
 
@@ -82,18 +86,22 @@ class BaseApiClient:
         template_dir = template_dir if template_dir else "templates"
         try:
             with open(
-                os.path.join(template_dir, f"{self.client_type}.system.html"), "r"
+                os.path.join(template_dir, f"{self.client_type}.system.html"),
+                "r",
+                encoding="utf-8",
             ) as file:
                 self.system_template = jinja2.Template(file.read())
             with open(
-                os.path.join(template_dir, f"{self.client_type}.user.html"), "r"
+                os.path.join(template_dir, f"{self.client_type}.user.html"),
+                "r",
+                encoding="utf-8",
             ) as file:
                 self.user_template = jinja2.Template(file.read())
         except FileNotFoundError as e:
-            self.logger.error(f"Template file not found: {e}")
+            self.logger.error("Template file not found: %s", e)
             raise e
         except Exception as e:
-            self.logger.error(f"Error loading templates: {e}")
+            self.logger.error("Error loading templates: %s", e)
             raise e
 
     def _render_message(

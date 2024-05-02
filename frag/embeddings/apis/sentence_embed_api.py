@@ -3,19 +3,15 @@ This module allows for embedding with HuggingFace models.
 """
 
 from typing import List
-from pydantic import ConfigDict, Field, model_validator
-from logging import getLogger
-from chromadb.api.types import EmbeddingFunction
+from pydantic import ConfigDict, Field
+from logging import getLogger, Logger
+from chromadb.api.types import EmbeddingFunction, Documents
 from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
+from sentence_transformers import SentenceTransformer
 
-logger = getLogger(__name__)
+logger: Logger = getLogger(__name__)
 
-try:
-    from sentence_transformers import SentenceTransformer
-except ImportError:
-    SentenceTransformer = None
-
-from .base_embed_api import EmbedAPI  # noqa
+from .embed_api import EmbedAPI  # noqa
 
 
 class SentenceEmbedAPI(EmbedAPI):
@@ -32,28 +28,24 @@ class SentenceEmbedAPI(EmbedAPI):
     name: str = Field(
         "all-MiniLM-L6-v2", description="Name for HuggingFace embeddings model"
     )
-    max_tokens: int = Field(..., description="Maximum tokens to embed")
-    model: "SentenceTransformer" = Field(  # type: ignore
-        description="The SentenceTransformer model to use"
-    )
+    max_tokens: int = Field(512, description="Maximum tokens to embed")
 
-    @model_validator(mode="before")
-    @classmethod
-    def validate_model(cls, v):
-        if not SentenceTransformer:
-            raise ValueError(
-                "SentenceTransformer not installed; use `poetry add -E oss` \
-                    to install it and run open source models"
-            )
-        try:
-            model = SentenceTransformer(v.get("name"))
-        except Exception as e:
-            raise ValueError(f"Error: init SentenceTransformer model:{e}")
-        return {
-            **v,
-            "model": model,
-            "max_tokens": v.get("max_tokens", model.get_max_seq_length()),
-        }
+    _api: "SentenceTransformer" | None = None
+
+    @property
+    def model(self) -> "SentenceTransformer":
+
+        if self._api is None:
+            try:
+                self._api = SentenceTransformer(self.name)
+            except ImportError:
+                raise ImportError(
+                    "Unable to import SentenceTransformer. Please install it using ",
+                    "`pip install sentence-transformers`",
+                )
+            except Exception as e:
+                raise ValueError(f"Error embedding text with HF model: {e}")
+        return self._api
 
     def encode(self, text: str) -> List[int]:
         return self.model.tokenizer.encode(text)
@@ -61,8 +53,9 @@ class SentenceEmbedAPI(EmbedAPI):
     def decode(self, tokens: List[int]) -> str:
         return self.model.tokenizer.decode(tokens)
 
-    def embed(self) -> EmbeddingFunction:
+    @property
+    def embed_function(self) -> EmbeddingFunction[Documents]:
         try:
-            return SentenceTransformerEmbeddingFunction(model_name=self.model)
+            return SentenceTransformerEmbeddingFunction(model_name=self.name)
         except Exception as e:
             raise ValueError(f"Error embedding text with HF model: {e}")

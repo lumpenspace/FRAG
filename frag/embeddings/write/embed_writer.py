@@ -14,7 +14,7 @@ import logging
 from pydantic import BaseModel, Field
 from frag.embeddings.embedding_store import EmbeddingStore
 from frag.embeddings.chunks import SourceChunker, Chunk
-from frag.embeddings.embeddings_metadata import Metadata, ChunkMetadata
+from frag.embeddings.embeddings_metadata import ChunkInfo, ChunkMetadata
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ class EmbedWriter(BaseModel):
     store: EmbeddingStore = Field(default=None)
     chunker: SourceChunker = Field(default=None)
 
-    def create_embeddings_for_document(self, text: str, metadata: Metadata):
+    def create_embeddings_for_document(self, text: str, metadata: ChunkInfo):
         """
         Creates embeddings for a given document and stores them in the database.
 

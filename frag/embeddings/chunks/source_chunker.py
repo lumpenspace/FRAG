@@ -18,7 +18,7 @@ from pydantic import BaseModel, Field, model_validator
 
 from .chunk import SourceChunk
 from frag.embeddings.apis.openai_embed_api import EmbedAPI
-from frag.types.settings import ChunkerSettings
+from frag.typedefs.llm_settings import ChunkerSettings
 
 
 class SourceChunker(BaseModel):

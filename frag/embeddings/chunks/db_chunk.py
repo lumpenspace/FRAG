@@ -3,7 +3,7 @@ import logging
 from pydantic import Field
 from chromadb.api.types import Document
 from .chunk import Chunk
-from frag.embeddings.embeddings_metadata import Metadata
+from frag.embeddings.embeddings_metadata import ChunkInfo
 
 logger = logging.getLogger(__name__)
 
@@ -21,8 +21,8 @@ class DBChunk(Chunk):
     def from_db_results(
         cls,
         ids: List[List[str]],
-        documents: List[List[Document]] | None,
-        metadatas: List[List[Metadata]],
+        documents: List[List[Document]],
+        metadatas: List[List[ChunkInfo]],
         distances: List[List[float]],
         **kwargs
     ):
@@ -42,16 +42,12 @@ class DBChunk(Chunk):
 
         db_chunks = []
         for i in range(len(ids)):
-            if documents is not None:
-                text = documents[i][0]
-            else:
-                text = None
             chunk = cls(
                 parts=metadatas[i][0].to_dict().get("parts", 1),
                 part=metadatas[i][0].to_dict().get("part", 1),
                 metadata=metadatas[i][0],
                 score=distances[i][0],
-                text=text,
+                text=documents[i][0],
                 id=ids[i][0],
             )
             db_chunks.append(chunk)

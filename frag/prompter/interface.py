@@ -1,38 +1,59 @@
-from litellm.main import completion
+"""
+Interface bot. This is the bot that will directly interact with the user.
+
+To personalise the template, extract (`frag template extract`) and modify them from:
+- .frag/templates/system.j2
+- .frag/templates/user.j2
+"""
+
+from logging import getLogger, Logger
 from typing import List, Literal
-from frag.types import LLMSettings, Note, MessageParam
-from .base_api_client import BaseApiClient
+
 import jinja2
-import logging
+from litellm import completion, ModelResponse
+
+from frag.typedefs import LLMSettings, MessageParam, Note
+
+from .base_api_client import BaseBot
 
 
-class Interface(BaseApiClient):
+class InterfaceBot(BaseBot):
+    """
+    Interface bot. This is the bot that will directly interact with the user.
+
+    It is called by `prompter.py`.
+    """
+
     client_type: Literal["prompter"] = "prompter"
     settings: LLMSettings
     system_template: jinja2.Template
     user_template: jinja2.Template
+    logger: Logger = getLogger(__name__)
 
-    def __init__(self, settings: LLMSettings, template_dir: str):
+    def __init__(self, settings: LLMSettings, template_dir: str) -> None:
         super().__init__(settings, template_dir=template_dir)
 
-    def run(self, messages: List[MessageParam], notes: List[Note]):
+    def run(self, messages: List[MessageParam], notes: List[Note]) -> ModelResponse:
         try:
-            rendered_messages = self.render(messages, notes=notes)
+            rendered_messages: List[MessageParam] = self._render(messages, notes=notes)
 
-            result = completion(
-                messages=rendered_messages,
-                model=self.settings.llm,
-                **self.settings.model_dump(exclude=set(["llm"])),
+            result = ModelResponse(
+                completion(
+                    messages=rendered_messages,
+                    model=self.settings.llm,
+                    stream=False,
+                    **self.settings.model_dump(exclude=set(["llm"])),
+                )
             )
             return result
         except jinja2.TemplateError as te:
-            logging.error(f"Template rendering error: {te}")
+            self.logger.error("Template rendering error: %s", te)
             raise
         except Exception as e:
-            logging.error(f"General error during completion: {e}")
+            self.logger.error("General error during completion: %s", e)
             raise
 
-    def render(self, messages: List[MessageParam], **kwargs) -> List[MessageParam]:
+    def _render(self, messages: List[MessageParam], **kwargs) -> List[MessageParam]:
         try:
             last_message = messages[-1]
             return [
@@ -43,10 +64,10 @@ class Interface(BaseApiClient):
                 ),
             ]
         except IndexError as ie:
-            logging.error(
-                f"Rendering error - possibly due to empty messages list: {ie}"
+            self.logger.error(
+                "Rendering error - possibly due to empty messages list: %s", ie
             )
             raise
         except Exception as e:
-            logging.error(f"General rendering error: {e}")
+            self.logger.error("General rendering error: %s", e)
             raise
