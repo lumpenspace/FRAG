@@ -12,7 +12,8 @@ from typing import List, Literal
 import jinja2
 from litellm import completion, ModelResponse
 
-from frag.typedefs import LLMSettings, MessageParam, Note
+from frag.typedefs import MessageParam, Note
+from frag.settings import LLMModelSettings
 
 from .base_bot import BaseBot
 
@@ -24,13 +25,13 @@ class InterfaceBot(BaseBot):
     It is called by `prompter.py`.
     """
 
-    client_type: Literal["interface"] = "interface"
-    settings: LLMSettings
+    client_type = "interface"
+    settings: LLMModelSettings
     system_template: jinja2.Template
     user_template: jinja2.Template
     logger: Logger = getLogger(__name__)
 
-    def __init__(self, settings: LLMSettings, template_dir: str) -> None:
+    def __init__(self, settings: LLMModelSettings, template_dir: str) -> None:
         super().__init__(settings, template_dir=template_dir)
 
     def run(self, messages: List[MessageParam], notes: List[Note]) -> ModelResponse:
@@ -40,7 +41,7 @@ class InterfaceBot(BaseBot):
             result = ModelResponse(
                 completion(
                     messages=rendered_messages,
-                    model=self.settings.llm,
+                    model=self.settings.api,
                     stream=False,
                     **self.settings.model_dump(exclude=set(["llm"])),
                 )

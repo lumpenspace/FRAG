@@ -14,7 +14,7 @@ logger: Logger = getLogger(__name__)
 from .embed_api import EmbedAPI  # noqa
 
 
-class SentenceEmbedAPI(EmbedAPI):
+class HFEmbedAPI(EmbedAPI):
     """
     A class to interact with HuggingFace's embedding models.
 

@@ -5,7 +5,7 @@
 from frag import typedefs
 from frag.frag import Frag
 from frag.embeddings import EmbeddingStore
-from frag.prompter import Prompter
+from frag.completions import Prompter
 
 from dotenv import load_dotenv
 

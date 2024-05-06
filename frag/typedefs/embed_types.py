@@ -9,9 +9,11 @@ It includes the following models:
 """
 
 from datetime import date, datetime
-from typing import Dict, Optional, Union
+from typing import Dict, Optional, Union, Literal
 
 from pydantic import BaseModel, Field, field_validator
+
+ApiSource = Literal["OpenAI", "HuggingFace"]
 
 
 class DocMeta(BaseModel):

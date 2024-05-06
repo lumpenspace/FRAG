@@ -36,7 +36,7 @@ class LLMModelSettings(BaseSettings):
         """
         Makes sure all params are supported by the model.
         """
-        other_values: Dict[str, Any] = {k: v for k, v in values.items() if k != "llm"}
+        other_values: Dict[str, Any] = {k: v for k, v in values.items() if k != "api"}
         # check if values are supported
         model_string: str = values.get("api", "gpt-3.5-turbo")
         info: Dict[str, Any] = get_model_info(model_string)
@@ -50,4 +50,4 @@ class LLMModelSettings(BaseSettings):
                 raise ValueError(
                     f"Unsupported parameter {k} for model {values.get('model', 'gpt-3.5-turbo')}"
                 )
-        return values
+        return {**other_values, "api": model_string}

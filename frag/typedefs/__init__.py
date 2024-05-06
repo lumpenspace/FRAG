@@ -1,5 +1,5 @@
 """
-Module for settings
+Export common types and classes
 """
 
 # pylint: disable=unused-import
@@ -8,7 +8,9 @@ Module for settings
 
 from typing import Type
 
+
 from chromadb import Documents
+from .embed_types import DocMeta, RecordMeta, ApiSource, 
 
 from .bot_comms_types import (
     AssistantMessage,
@@ -20,8 +22,5 @@ from .bot_comms_types import (
     SystemMessage,
     UserMessage,
 )
-from .embed_meta import DocMeta, RecordMeta
-from .embed_settings import EmbedSettings
-from .llm_settings import LLMSettings
 
 Document = Type[str]

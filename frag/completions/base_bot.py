@@ -4,13 +4,13 @@ Base API client, from which both the prompter and the summariser inherit.
 
 import logging
 import os
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Literal
 
 import jinja2
 from litellm.main import ModelResponse, completion
 
-from frag.typedefs import LLMSettings, MessageParam, Role, SystemMessage, UserMessage
-from frag.typedefs.llm_model_settings import LLMModelSettings
+from frag.typedefs import MessageParam, Role, SystemMessage, UserMessage
+from frag.settings import LLMModelSettings
 
 
 class BaseBot:
@@ -18,15 +18,15 @@ class BaseBot:
     Base API client class that handles interactions with the LLM model.
     """
 
-    settings: LLMSettings
-    client_type: None
+    settings: LLMModelSettings
+    client_type: Literal["interface", "summarizer"] | None = None
     system_template: jinja2.Template
     user_template: jinja2.Template
     logger: logging.Logger
     messages: List[MessageParam]
     responder: str
 
-    def __init__(self, settings: LLMSettings, template_dir: str) -> None:
+    def __init__(self, settings: LLMModelSettings, template_dir: str) -> None:
         """
         Initializes the BaseApiClient with the given settings, template paths, and client type.
 
@@ -49,9 +49,9 @@ class BaseBot:
 
         :param messages: List of ChatCompletionMessage objects to be processed.
         """
-        if self.settings. is None:
+        if self.settings.api is None:
             raise ValueError("llm must be provided")
-        if len(messages) == 0 or messages is None:
+        if messages is None:
             raise ValueError("messages must be provided")
         try:
             rendered_messages: List[MessageParam] = [
@@ -59,7 +59,11 @@ class BaseBot:
             ]
 
             return ModelResponse(
-                completion(self.settings., messages=rendered_messages)
+                completion(
+                    model=self.settings.api,
+                    messages=rendered_messages,
+                    **self.settings.completion_kwargs,
+                )
             )
         except Exception as e:
             self.logger.error(f"Error during completion: {e}")

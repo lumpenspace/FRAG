@@ -4,7 +4,9 @@ Module containing the settings used for the chunker.
 They are contained under embed.chunker in the .fragrc file.
 """
 
+from distutils.command import sdist
 from logging import Logger, getLogger
+from re import S
 from typing import Any, Dict
 
 from pydantic_settings import BaseSettings
@@ -26,15 +28,13 @@ class ChunkerSettings(BaseSettings):
     buffer_after: int = 0
 
     @classmethod
-    def from_dict_and_max_tokens(
-        cls, d: Dict[str, Any], max_tokens: int
-    ) -> "ChunkerSettings":
+    def from_dict(cls, d: Dict[str, Any]) -> "ChunkerSettings":
         """
         Create a ChunkerSettings object from a dictionary, using the model to validate it.
         """
         if "max_length" in d:
-            if d["max_length"] > max_tokens:
-                d["max_length"] = max_tokens
+            if d["max_length"] > d["api_max_tokens"]:
+                d["max_length"] = d["api_max_tokens"]
                 logger.warning(
                     "max_length is greater than the maximum number of tokens for the model.\
                     Setting max_length to the maximum number of tokens."
