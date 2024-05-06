@@ -1,4 +1,3 @@
-from frag.embeddings.embeddings_metadata import ChunkInfo, ChunkMetadata
 from frag.embeddings.chunks import Chunk, SourceChunk, DBChunk
 from frag.embeddings.apis import OAIEmbedAPI, EmbedAPI
 from frag.embeddings.embedding_store import EmbeddingStore

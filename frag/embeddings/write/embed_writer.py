@@ -11,10 +11,12 @@ fetching embeddings from models, and updating or deleting embeddings in the data
 
 import logging
 
+from typing import List
+
 from pydantic import BaseModel, Field
 from frag.embeddings.embedding_store import EmbeddingStore
-from frag.embeddings.chunks import SourceChunker, Chunk
-from frag.embeddings.embeddings_metadata import ChunkInfo, ChunkMetadata
+from frag.embeddings.chunks import SourceChunker, Chunk, SourceChunk
+from frag.typedefs import RecordMeta
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +26,9 @@ class EmbedWriter(BaseModel):
     store: EmbeddingStore = Field(default=None)
     chunker: SourceChunker = Field(default=None)
 
-    def create_embeddings_for_document(self, text: str, metadata: ChunkInfo):
+    def create_embeddings_for_document(
+        self, text: str, metadata: RecordMeta
+    ) -> list[Chunk]:
         """
         Creates embeddings for a given document and stores them in the database.
 
@@ -44,14 +48,14 @@ class EmbedWriter(BaseModel):
             >>> for chunk in chunks:
             ...     print(chunk.id)
         """
-        chunks = []
-        source_chunks = self.store.chunker.chunk_text(text)
+        chunks: List[Chunk] = []
+        source_chunks: List[SourceChunk] = self.chunker.chunk_text(text)
         metadata.parts = len(source_chunks)
         for index, source_chunk in enumerate(source_chunks):
-            metadata = ChunkMetadata(
+            metadata = RecordMeta(
                 **metadata.model_copy(update={"part": index + 1}).model_dump()
             )
-            chunk = Chunk.from_source_chunk(
+            chunk: Chunk = Chunk.from_source_chunk(
                 source_chunk=source_chunk, metadata=metadata, part=index + 1
             )
             self.fetch_and_store_embedding(chunk)
@@ -85,7 +89,7 @@ class EmbedWriter(BaseModel):
             >>> print(embedding)
         """
         try:
-            collection_result = self.store.get(ids=[chunk.id])
+            collection_result: Embeddings = self.store.get(ids=[chunk.id])
             embedding = collection_result.get("embeddings")
             if embedding is not None:
                 logging.info("Embedding found in db")

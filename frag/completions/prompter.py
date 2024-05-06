@@ -1,7 +1,8 @@
 from logging import Logger, getLogger
-from typing import List
+from typing import List, Any
 from litellm import Choices
-from frag.typedefs import LLMSettings
+from frag.settings import LLMSettings
+from frag.typedefs import Message
 from .summarizer_bot import SummarizerBot
 from .interface_bot import InterfaceBot
 
@@ -20,13 +21,15 @@ class Prompter:
         self.summarizer: SummarizerBot = summarizer
         self.interface: InterfaceBot = interface
 
-    def respond(self, messages, **kwargs) -> str:
+    def respond(self, messages: List[Message], **kwargs: Any) -> str:
         """
         Respond to a message history.
         """
         try:
-            response: List[Choices] = self.interface.run(messages, **kwargs).choices
-            return response[0].content if response else ""
+            responses: List[Choices] = self.interface.run(messages, **kwargs).choices
+            if responses and responses[0] and responses[0].get:
+                return str(responses[0].get("content", ""))
+            return ""
         except Exception as e:
             self.logger.error("Error in responding: %s", e)
             raise

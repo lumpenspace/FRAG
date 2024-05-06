@@ -10,7 +10,7 @@ from typing import Type
 
 
 from chromadb import Documents
-from .embed_types import DocMeta, RecordMeta, ApiSource, 
+from .embed_types import DocMeta, RecordMeta, ApiSource
 
 from .bot_comms_types import (
     AssistantMessage,

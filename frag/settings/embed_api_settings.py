@@ -1,4 +1,5 @@
-from typing import TypedDict
+from typing import Self
+from typing_extensions import TypedDict
 from pydantic_settings import BaseSettings
 from frag.embeddings.apis import EmbedAPI, get_embed_api
 from frag.typedefs.embed_types import ApiSource
@@ -27,5 +28,6 @@ class EmbedAPISettings(BaseSettings):
         )
 
     @classmethod
-    def from_dict(cls, data: EmbedApiSettingsDict) -> "EmbedAPISettings":
+    def from_dict(cls, data: EmbedApiSettingsDict) -> Self:
+
         return cls(**data)

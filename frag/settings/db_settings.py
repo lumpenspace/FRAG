@@ -5,9 +5,18 @@ Settings for the embedding API and database.
 import logging
 import os
 from typing import Any, Dict
+from typing_extensions import TypedDict
 
 from pydantic import field_validator
 from pydantic_settings import BaseSettings
+
+DBSettingsDict = TypedDict(
+    "DBSettingsDict",
+    {
+        "path": str,
+        "collection_name": str,
+    },
+)
 
 
 class DBSettings(BaseSettings):

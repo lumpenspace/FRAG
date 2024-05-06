@@ -1,8 +1,7 @@
 from pydantic import BaseModel, Field
 
 import hashlib
-
-from frag.embeddings.embeddings_metadata import ChunkInfo, ChunkMetadata
+from frag.typedefs.embed_types import RecordMeta
 
 
 class SourceChunk(BaseModel):
@@ -49,11 +48,11 @@ class Chunk(BaseModel):
     """
 
     text: str = Field(..., description="Text of the chunk")
-    metadata: ChunkInfo = Field(..., description="Metadata of the chunk")
+    metadata: RecordMeta = Field(..., description="Metadata of the chunk")
     id: str = Field(..., description="ID of the chunk")
 
     @classmethod
-    def make_id(cls, text: str, metadata: ChunkMetadata, part: int) -> str:
+    def make_id(cls, text: str, metadata: RecordMeta, part: int) -> str:
         """
         Generates a unique identifier for a chunk based on its text, metadata, and part number.
 
@@ -70,7 +69,7 @@ class Chunk(BaseModel):
 
     @classmethod
     def from_source_chunk(
-        cls, source_chunk: SourceChunk, metadata: ChunkMetadata, part: int
+        cls, source_chunk: SourceChunk, metadata: RecordMeta, part: int
     ):
         """
         Creates a Chunk instance from a SourceChunk instance,

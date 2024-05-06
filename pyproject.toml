@@ -29,6 +29,6 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.scripts]
 docs = "scripts.build_docs:main"
 serve = "scripts.serve_docs:main"
-frag = "frag.cli.frag:main"
+frag = "cli:main"
 
 

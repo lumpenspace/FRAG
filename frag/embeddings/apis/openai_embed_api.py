@@ -11,7 +11,7 @@ import tiktoken
 
 from .embed_api import EmbedAPI
 
-openaiembedding_models = [
+openai_embedding_models: list[str] = [
     "text-embedding-ada-002",
     "text-embedding-large",
     "text-embedding-small",
@@ -40,7 +40,7 @@ class OAIEmbedAPI(EmbedAPI):
     @field_validator("name")
     @classmethod
     def validate_name(cls, v: str) -> str:
-        if v not in openaiembedding_models:
+        if v not in openai_embedding_models:
             raise ValueError(f"Unsupported OpenAI embedding model: {v}")
         return v
 

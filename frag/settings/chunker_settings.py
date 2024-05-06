@@ -4,9 +4,7 @@ Module containing the settings used for the chunker.
 They are contained under embed.chunker in the .fragrc file.
 """
 
-from distutils.command import sdist
 from logging import Logger, getLogger
-from re import S
 from typing import Any, Dict
 
 from pydantic_settings import BaseSettings

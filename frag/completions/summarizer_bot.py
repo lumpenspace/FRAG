@@ -4,8 +4,9 @@ It uses internal methods to render system and user messages based on
 the latest messages.
 """
 
-from typing import List, Literal, Dict, Any
-from frag.typedefs import LLMSettings, MessageParam, Document, DocMeta
+from typing import List, Dict, Any
+from frag.typedefs import MessageParam, Document, DocMeta
+from frag.settings import LLMSettings
 from .base_bot import BaseBot
 
 
@@ -16,7 +17,7 @@ class SummarizerBot(BaseBot):
     the latest messages.
     """
 
-    client_type: Literal["summarizer"] = "summarizer"
+    client_type = "summarizer"
 
     def __init__(self, settings: LLMSettings, template_dir: str):
         super().__init__(settings, template_dir=template_dir)

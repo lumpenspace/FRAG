@@ -8,24 +8,28 @@ frag init
 ```
 """
 
-from typing import Annotated, TypedDict, Dict, Any
+from typing import Dict, Any
+from typing_extensions import TypedDict
 from pathlib import Path
 from logging import getLogger, Logger
 import yaml
 from pydantic_settings import BaseSettings
 
 from .llm_settings import LLMSettings
-from .db_settings import DBSettings
-from .embed_api_settings import EmbedAPISettings
+from .db_settings import DBSettings, DBSettingsDict
+from .embed_api_settings import EmbedAPISettings, EmbedApiSettingsDict
 from .chunker_settings import ChunkerSettings
+
+EmbedApiSettingsDict = EmbedApiSettingsDict
+DBSettingsDict = DBSettingsDict
 
 SettingsDict = TypedDict(
     "SettingsDict",
     {
-        "db": Annotated[Dict[str, Any], "Embedding DB settings"],
-        "embed_api": Annotated[Dict[str, Any], "Embedding API settings"],
-        "chunker": Annotated[Dict[str, Any], "Chunker settings"],
-        "bots": Annotated[Dict[str, Any], "LLM APIs and settings"],
+        "db": None | DBSettingsDict,
+        "embed_api": None | EmbedApiSettingsDict,
+        "chunker": None | Dict[str, Any],
+        "bots": None | Dict[str, Any],
     },
 )
 
@@ -39,8 +43,8 @@ class Settings(BaseSettings):
     those settings include:
     """
 
-    db: DBSettings
-    embed_api: EmbedAPISettings
+    db: DBSettings | DBSettingsDict
+    embed_api: EmbedAPISettings | EmbedApiSettingsDict
     chunker: ChunkerSettings
     bots: LLMSettings
 
@@ -87,12 +91,7 @@ class Settings(BaseSettings):
         if settings_path is not None and settings_path.exists():
             settings: SettingsDict = yaml.safe_load(settings_path.read_text())
         else:
-            settings: SettingsDict = {
-                "db": {},
-                "embed_api": {},
-                "chunker": {},
-                "bots": {},
-            }
+            settings: SettingsDict = {}
 
         bots: LLMSettings = LLMSettings.from_dict(settings.get("bots", {}))
 

@@ -7,21 +7,15 @@ from enum import Enum
 from typing import Literal, Self
 import rich
 from rich.prompt import Prompt
-from rich.text import Text
-from rich.logging import RichHandler
+from rich.console import Console
+
+console = Console()
 
 
 class C(Enum):
     """
     Colors for the CLI
     """
-quick history:
-
-swing 1: cosmogony to geometry
-- presocratics: basic substance of the universe, etc
-- attempted monotheisms: the indivisible thing / god
-- pythagoras: also god, but! also the nondivisible part of space (point) 
-
 
     PINK = 225
     TURQUOISE = 39
@@ -56,11 +50,11 @@ def create_or_override(path: str, name: str, dir: bool = False) -> str | None:
                 f.write("")
             rich.print("[green]Successfully created .fragrc[/green]")
         else:
-            rich.("[red]Initialization cancelled. .fragrc already exists.[/red]")
-            click.secho(
-                "Initialization cancelled. .fragrc already exists.",
-                fg=C.ERROR.value,
-                bold=True,
+            console.print(
+                f"[bold{C.ERROR.value}]Initialization cancelled. .fragrc already exists.[/]"
+            )
+            console.print(
+                f"[bold {C.ERROR.value}]Initialization cancelled. .fragrc already exists.[/]"
             )
             return
     else:
@@ -72,7 +66,7 @@ def create_or_override(path: str, name: str, dir: bool = False) -> str | None:
             with open(path, "w", encoding="utf-8") as f:
                 f.write("")
             path = os.path.join(path, name)
-        click.secho(f"Successfully created {name}", fg=C.GREEN.value, bold=True)
+        console.print(f"[bold {C.GREEN.value}]Successfully created {name}[/]")
         return os.path.abspath(path)
 
 
@@ -95,13 +89,21 @@ class Sections:
     def subtitle_index(self) -> str:
         return f"{self.title_index}{self.subindex + 1}. "
 
+    def section(self, title: str, subtitle: str | None = None) -> None:
+        self.title(title)
+        if subtitle:
+            self.subtitle(subtitle)
+
+    def subsection(self, title: str) -> None:
+        self.subtitle(title)
+
     def title(self, title: str) -> None:
-        click.secho(f"{self.title_index}", fg="black", bg="green", bold=True)
+        console.print(f"[bold black on green]{self.title_index}{title}[/bold green]")
         self.subindex = 0
         self.index += 1
 
     def subtitle(self, title: str) -> None:
-        click.secho(f"{self.subtitle_index}{title}", fg="black", bg="green", bold=True)
+        console.print(f"[bold black on green]{self.subtitle_index}{title}[/bold green]")
         self.subindex += 1
 
     def reset(self) -> None:
@@ -109,4 +111,4 @@ class Sections:
         self.subindex = 0
 
 
-section = Sections()
+section = Sections

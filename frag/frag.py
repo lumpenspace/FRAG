@@ -6,7 +6,8 @@ from frag.embeddings.embedding_store import EmbeddingStore
 from frag.embeddings.read.embed_reader import EmbeddingsReader
 from frag.embeddings.write.embed_writer import EmbedWriter
 
-from frag.typedefs.llm_settings import Settings
+from frag.settings import Settings
+from frag.settings.settings import SettingsDict
 
 
 class Frag:
@@ -14,10 +15,10 @@ class Frag:
     Main class for the fRAG library
     """
 
-    def __init__(self, settings: Settings | dict | None = None):
+    def __init__(self, settings: Settings | SettingsDict | None = None) -> None:
         if settings is None:
             settings = Settings()
-        if isinstance(settings, dict):
+        if isinstance(settings, SettingsDict):
             settings = Settings(**settings)
 
         self.settings = settings

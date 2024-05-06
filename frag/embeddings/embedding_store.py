@@ -1,4 +1,4 @@
-import os
+from typing import Any
 from chromadb.api import ClientAPI
 from chromadb import Collection, PersistentClient
 from chromadb.api.types import QueryResult, Embeddings
@@ -14,7 +14,8 @@ from pydantic import (
 
 from frag.embeddings.apis import EmbedAPI, get_embed_api
 from frag.embeddings.chunks import SourceChunker
-from frag.typedefs import EmbedSettings
+from frag.settings import DBSettings
+from frag.settings.embed_api_settings import EmbedAPISettings
 
 from typing import List, Callable
 
@@ -61,13 +62,14 @@ class EmbeddingStore(BaseModel):
     _api: EmbedAPI | None = None
     _chunker: SourceChunker | None = None
     _collection: Collection | None = None
-    settings: EmbedSettings
+    embed_api_settings: EmbedAPISettings
+    db_settings: DBSettings
 
     model_config = ConfigDict({"arbitrary_types_allowed": True})
 
     def __init__(self, **data: Any) -> None:
         super().__init__(**data)
-        self._api = get_embed_api(self.settings.embed_model_name)
+        self._api = get_embed_api(**self.embed_api_settings)
         self._chunker = SourceChunker(settings=self.settings, embed_api=self._api)
         self._client = PersistentClient(path=self.settings.db_path)
         self._collection = self._client.get_or_create_collection(
@@ -75,8 +77,8 @@ class EmbeddingStore(BaseModel):
         )
 
     @property
-    def add(self):
-        return self.collection.add
+    def add(self) -> Callable[..., None]:
+        return self._collection.add
 
     @property
     def get(self) -> Callable[..., Embeddings]:
@@ -84,7 +86,7 @@ class EmbeddingStore(BaseModel):
 
     @property
     def query(self) -> Callable[..., QueryResult]:
-        query: Callable[, QueryResult] = self._collection.query
+        query: Callable[..., QueryResult] = self._collection.query
         return query
 
     def fetch(self, text: str) -> Embeddings:

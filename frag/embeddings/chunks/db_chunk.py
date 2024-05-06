@@ -1,9 +1,9 @@
-from typing import List
+from typing import List, Self
 import logging
 from pydantic import Field
 from chromadb.api.types import Document
 from .chunk import Chunk
-from frag.embeddings.embeddings_metadata import ChunkInfo
+from frag.typedefs import RecordMeta
 
 logger = logging.getLogger(__name__)
 
@@ -22,10 +22,9 @@ class DBChunk(Chunk):
         cls,
         ids: List[List[str]],
         documents: List[List[Document]],
-        metadatas: List[List[ChunkInfo]],
+        metadatas: List[List[RecordMeta]],
         distances: List[List[float]],
-        **kwargs
-    ):
+    ) -> list[Self]:
         """
         Creates a list of DBChunk instances from database results.
 
@@ -40,11 +39,11 @@ class DBChunk(Chunk):
             List[DBChunk]: A list of DBChunk instances.
         """
 
-        db_chunks = []
+        db_chunks: List[Self] = []
         for i in range(len(ids)):
-            chunk = cls(
-                parts=metadatas[i][0].to_dict().get("parts", 1),
-                part=metadatas[i][0].to_dict().get("part", 1),
+            chunk: Self = cls(
+                parts=int(metadatas[i][0].to_dict().get("parts", 1)),
+                part=int(metadatas[i][0].to_dict().get("part", 1)),
                 metadata=metadatas[i][0],
                 score=distances[i][0],
                 text=documents[i][0],
