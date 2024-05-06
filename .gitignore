@@ -129,3 +129,4 @@ venv.bak/
 .old
 
 .vscode
+db/
