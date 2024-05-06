@@ -130,3 +130,4 @@ venv.bak/
 
 .vscode
 db/
+custom_db_path/
