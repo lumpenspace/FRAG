@@ -10,10 +10,13 @@ It includes the following models:
 
 from datetime import date, datetime
 from typing import Dict, Optional, Union, Literal
+from llama_index.core.embeddings import BaseEmbedding
 
 from pydantic import BaseModel, Field, field_validator
 
 ApiSource = Literal["OpenAI", "HuggingFace"]
+
+BaseEmbedding = BaseEmbedding
 
 
 class DocMeta(BaseModel):

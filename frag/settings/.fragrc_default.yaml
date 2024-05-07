@@ -1,24 +1,16 @@
-db:
-  # These settings are for the SQLite file that chromadb will use
-  # to store embeddings and metadata.
-
-  path: "{{frag_dir}}/db" # directory in which to store embeddings db 
+embeds:
+  db_path: "{{frag_dir}}/db" # directory in which to store embeddings db 
                            # (by default, this is the directory in which
                            # the fragrc file is located)
-
   default_collection: default # name of the default collection
 
-embed_api:
-  api_name: text-embedding-3-large # Name of the embedding model.
+  api_model: text-embedding-3-large # Name of the embedding model.
                                    # for HuggingFace,
                                    # see https://www.sbert.net/docs/pretrained_models.html
                                    # for OpenAI, see https://platform.openai.com/docs/models
   api_source: OpenAI # source of the embedding model. can be OpenAI or HuggingFace
   # also available: 
   # max_tokens(int), to set the maximum number of tokens to embed
-chunker:
-  preserve_paragraphs: true
-  # for a full list of chunker settings, see: ./chunker_settings.py
 bots:
   api: gpt-3.5-turbo # see: https://litellm.vercel.app/docs/providers
   # we use the lite-llm default settings unless the user specifies otherwise,

@@ -4,7 +4,7 @@
 
 from frag import typedefs
 from frag.frag import Frag
-from frag.embeddings import EmbeddingStore
+from frag.embeddings.store import EmbeddingStore
 from frag.completions import Prompter
 from frag.console import console, error_console, live
 

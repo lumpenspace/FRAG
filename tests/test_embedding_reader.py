@@ -1,11 +1,11 @@
 import pytest
 import uuid
 
-from frag.embeddings.embedding_store import EmbeddingStore
+from frag.embeddings_old.embedding_store import EmbeddingStore
 
-from frag.embeddings.embeddings_metadata import ChunkInfo
-from frag.embeddings.read.embed_reader import EmbeddingsReader
-from frag.embeddings.write.embed_writer import EmbedWriter
+from frag.embeddings_old.embeddings_metadata import ChunkInfo
+from frag.embeddings_old.read.embed_reader import EmbeddingsReader
+from frag.embeddings_old.write.embed_writer import EmbedWriter
 from frag.types import ChunkerSettings
 
 from tests.utils import EmbedAPITest

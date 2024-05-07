@@ -2,10 +2,7 @@
 fRAG: Main class for the fRAG library
 """
 
-from frag.embeddings.embedding_store import EmbeddingStore
-from frag.embeddings.read.embed_reader import EmbeddingsReader
-from frag.embeddings.write.embed_writer import EmbedWriter
-
+from frag.embeddings.store import EmbeddingStore
 from frag.settings import Settings
 from frag.settings.settings import SettingsDict
 
@@ -24,7 +21,7 @@ class Frag:
         self.settings = settings
         self.embedding_store = self._create_embedding_store()
 
-    def _create_embedding_store(self):
+    def _create_embedding_store(self) -> EmbeddingStore:
 
         return EmbeddingStore(
             db_path=self.settings.db.db_path,
@@ -32,23 +29,3 @@ class Frag:
             embed_settings=self.settings.embed,
             chunker_settings=self.settings.chunker,
         )
-
-    def writer(self):
-        """
-        Returns an EmbedWriter instance
-        """
-        return EmbedWriter(
-            store=self.embedding_store, chunker=self.embedding_store.chunker
-        )
-
-    def chunker(self):
-        """
-        Returns a SourceChunker instance
-        """
-        return self.embedding_store.chunker
-
-    def reader(self):
-        """
-        Returns an EmbeddingsReader instance
-        """
-        return EmbeddingsReader(store=self.embedding_store)

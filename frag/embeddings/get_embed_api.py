@@ -1,10 +1,10 @@
-from frag.embeddings.apis import OAIEmbedAPI, EmbedAPI, HFEmbedAPI
+from llama_index.core.embeddings import BaseEmbedding
 from frag.typedefs.embed_types import ApiSource
 
 
 def get_embed_api(
-    api_name: str, api_source: ApiSource, api_key: str | None = None
-) -> EmbedAPI:
+    api_source: ApiSource, api_model: str | None, api_key: str | None = None
+) -> BaseEmbedding:
     """
     Retrieves an embedding API instance based on the input.
 
@@ -19,14 +19,18 @@ def get_embed_api(
         ValueError: If no embedding API is provided.
     """
 
-    if not api_name:
+    if not api_model:
         raise ValueError("Embedding model and chunking settings must be provided")
     if api_source == "OpenAI":
-        return OAIEmbedAPI(name=api_name, api_key=api_key)
+        from llama_index.embeddings.openai import OpenAIEmbedding
+
+        return OpenAIEmbedding(model=api_model, api_key=api_key)
     elif api_source == "HuggingFace":
+        from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+
         try:
-            embed_api = HFEmbedAPI(name=api_name)
+            embed_api = HuggingFaceEmbedding(model=api_model)
         except ValueError:
-            raise ValueError(f"Invalid embedding API: {api_name} on {api_source}")
+            raise ValueError(f"Invalid embedding API: {api_model} on {api_source}")
 
     raise ValueError("Invalid embedding API type: %s" % type(embed_api))

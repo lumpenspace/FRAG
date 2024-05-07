@@ -126,7 +126,7 @@ venv.bak/
 .DS_Store
 
 # .old directory
-.old
+.old/
 
 .vscode
 db/

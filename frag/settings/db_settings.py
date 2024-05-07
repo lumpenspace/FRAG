@@ -6,7 +6,7 @@ import logging
 import os
 from typing import Any, Dict
 from typing_extensions import TypedDict
-
+from frag.console import console
 from pydantic import field_validator
 from pydantic_settings import BaseSettings
 
@@ -54,4 +54,5 @@ class DBSettings(BaseSettings):
         """
         Create a DBSettings object from a dictionary, using the model to validate it.
         """
+        console.log(f"[b]DBSettings:[/] {d}")
         return cls(**d)

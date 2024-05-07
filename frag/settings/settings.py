@@ -18,20 +18,17 @@ from pydantic_settings import BaseSettings
 
 from .bots_settings import BotsSettings
 from .db_settings import DBSettings, DBSettingsDict
-from .embed_api_settings import EmbedAPISettings, EmbedApiSettingsDict
-from .chunker_settings import ChunkerSettings
+from .embed_settings import EmbedSettings, EmbedSettingsDict
 from frag.console import console, error_console, live
 
 
-EmbedApiSettingsDict = EmbedApiSettingsDict
+EmbedSettingsDict = EmbedSettingsDict
 DBSettingsDict = DBSettingsDict
 
 SettingsDict = TypedDict(
     "SettingsDict",
     {
-        "db": None | DBSettingsDict,
-        "embed_api": None | EmbedApiSettingsDict,
-        "chunker": None | Dict[str, Any],
+        "embeds": None | EmbedSettingsDict,
         "bots": None | Dict[str, Any],
     },
 )
@@ -44,9 +41,7 @@ class Settings(BaseSettings):
     those settings include:
     """
 
-    db: DBSettings | DBSettingsDict
-    embed_api: EmbedAPISettings | EmbedApiSettingsDict
-    chunker: ChunkerSettings
+    embeds: EmbedSettings | EmbedSettingsDict
     bots: BotsSettings
 
     _frag_dir: Path | None = None
@@ -104,9 +99,7 @@ class Settings(BaseSettings):
                 f"No config found in: {Path(cls.frag_dir, 'config')}, using defaults"
             )
             settings: SettingsDict = {
-                "db": None,
-                "embed_api": None,
-                "chunker": None,
+                "embeds": None,
                 "bots": None,
             }
         try:
@@ -122,10 +115,8 @@ class Settings(BaseSettings):
     def from_dict(cls, settings: SettingsDict) -> Self:
         default_settings: SettingsDict = yaml.safe_load(cls.defaults_path.read_text())
 
-        embed_api: EmbedAPISettings | None = None
-        chunker: ChunkerSettings | None = None
+        embeds: EmbedSettings | None = None
         bots: BotsSettings | None = None
-        db: DBSettings | None = None
         console.log("[b]Validating:[/b]")
         try:
             bots = BotsSettings.from_dict(settings.get("bots", {}))
@@ -137,48 +128,19 @@ class Settings(BaseSettings):
             raise ValueError("Bots settings are required")
 
         try:
-            embed_api = EmbedAPISettings.from_dict(
-                settings.get("embed_api", default_settings.get("embed_api", {}))
+            embeds = EmbedSettings.from_dict(
+                settings.get("embeds", default_settings.get("embeds", {}))
             )
         except ValueError as e:
             error: str = (
                 f"Error getting embed_api settings for:\n\
-                    {json.dumps(settings.get('embed_api', {}))}"
+                    {json.dumps(settings.get('embed', {}))}"
             )
             error_console.log(f"Error: {error}\n\n {e}\n")
-        if embed_api is None:
+        if embeds is None:
             raise ValueError("Embed API settings are required")
 
-        try:
-            chunker = ChunkerSettings.from_dict(
-                settings.get("chunker", default_settings.get("chunker", {})),
-                embed_api.max_tokens,
-            )
-        except ValueError as e:
-            error: str = (
-                f"Error getting chunker settings for:\n\
-                    {json.dumps(settings.get('chunker', {}))}"
-            )
-            error_console.log(f"Error: {error}\n\n {e}\n")
-        if chunker is None:
-            raise ValueError("Chunker settings are required")
-
-        try:
-            db = DBSettings.from_dict(
-                settings.get(
-                    "db", default_settings.get("db", default_settings.get("db", {}))
-                )
-            )
-        except ValueError as e:
-            error: str = (
-                f"Error getting db settings for:\n\
-                    {json.dumps(settings.get('db', {}))}"
-            )
-            error_console.log(f"Error: {error}\n\n {e}\n")
-        if db is None:
-            raise ValueError("DB settings are required")
-
-        instance: Settings = cls(db=db, embed_api=embed_api, chunker=chunker, bots=bots)
+        instance: Settings = cls(embeds=embeds, bots=bots)
         cls._instance = instance
         console.log("[b][green]Success![/green][/b]")
         return instance

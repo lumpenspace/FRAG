@@ -1,7 +1,7 @@
 import pytest
 import uuid
 
-from frag.embeddings import ChunkInfo, EmbedWriter, EmbeddingStore
+from frag.embeddings_old import ChunkInfo, EmbedWriter, EmbeddingStore
 from frag.types import ChunkerSettings
 
 

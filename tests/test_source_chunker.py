@@ -2,7 +2,7 @@
 
 import pytest
 
-from frag.embeddings.chunks import SourceChunker
+from frag.embeddings_old.chunks import SourceChunker
 from frag.types import ChunkerSettings
 from tests.utils import EmbedAPITest
 

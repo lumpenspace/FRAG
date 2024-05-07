@@ -21,6 +21,9 @@ sphinxcontrib-mermaid = "^0.9.2"
 tiktoken = "^0.6.0"
 transformers = "^4.39.3"
 rich = "^13.7.1"
+llama-index = "^0.10.34"
+llama-index-embeddings-huggingface = "^0.2.0"
+llama-index-vector-stores-chroma = "^0.1.8"
 
 [build-system]
 requires = ["poetry-core"]

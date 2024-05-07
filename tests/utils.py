@@ -6,7 +6,7 @@ and decode a list of integers back into a string.
 
 from typing import List
 
-from frag.embeddings.apis import EmbedAPI
+from frag.embeddings_old.apis import EmbedAPI
 
 
 class EmbedAPITest(EmbedAPI):

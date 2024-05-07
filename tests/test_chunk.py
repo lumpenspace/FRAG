@@ -1,4 +1,4 @@
-from frag.embeddings import SourceChunk, Chunk, DBChunk, ChunkInfo, ChunkMetadata
+from frag.embeddings_old import SourceChunk, Chunk, DBChunk, ChunkInfo, ChunkMetadata
 
 
 def test_source_chunk_creation():

@@ -2,7 +2,7 @@ from pydantic import ValidationError
 import pytest
 import uuid
 
-from frag.embeddings.embedding_store import EmbeddingStore
+from frag.embeddings_old.embedding_store import EmbeddingStore
 from frag.types import ChunkerSettings
 
 from tests.utils import EmbedAPITest

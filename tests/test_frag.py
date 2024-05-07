@@ -2,8 +2,8 @@ import pytest
 from unittest.mock import patch
 from frag.frag import Frag
 from frag.types import Settings
-from frag.embeddings.write.embed_writer import EmbedWriter
-from frag.embeddings.read.embed_reader import EmbeddingsReader
+from frag.embeddings_old.write.embed_writer import EmbedWriter
+from frag.embeddings_old.read.embed_reader import EmbeddingsReader
 
 def test_initialization_with_default_settings():
     with patch('frag.types.Settings') as mock_settings:

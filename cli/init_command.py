@@ -49,8 +49,12 @@ def init(path: str) -> SettingsDict | None:
         console.log(f"created db path: {db_path}")
 
     console.log("[b]copying default templates[/b]")
-    # copy templates from ../frag/templates to dir_path/templates
-    shutil.copytree(
-        Path(Path(__file__).parent.parent.absolute(), "templates"),
-        Path(dir_path, "templates"),
-    )
+
+    templates_src_path: Path = Path(__file__).parent.parent / "frag" / "templates"
+    templates_dest_path: Path = Path(dir_path) / "templates"
+
+    for src_file in templates_src_path.glob("*"):
+        dest_file: Path = templates_dest_path / src_file.name
+        if dest_file.exists():
+            dest_file.unlink()
+        shutil.copy(src_file, dest_file)
