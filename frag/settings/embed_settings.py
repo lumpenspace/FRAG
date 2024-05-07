@@ -1,8 +1,7 @@
 from typing import Self, Dict, Any
 from typing_extensions import TypedDict
 from pydantic_settings import BaseSettings
-from pydantic import field_validator, ValidationInfo
-import os
+from pydantic import field_validator
 import logging
 
 from frag.embeddings.get_embed_api import get_embed_api

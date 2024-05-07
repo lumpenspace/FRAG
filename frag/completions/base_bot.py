@@ -2,7 +2,6 @@
 Base API client, from which both the prompter and the summariser inherit.
 """
 
-import logging
 import os
 from typing import List, Dict, Any, Literal
 
@@ -48,10 +47,6 @@ class BaseBot:
 
         :param messages: List of ChatCompletionMessage objects to be processed.
         """
-        if self.settings.api is None:
-            raise ValueError("llm must be provided")
-        if messages is None:
-            raise ValueError("messages must be provided")
         try:
             rendered_messages: List[MessageParam] = [
                 msg for msg in self._render(messages, **kwargs)
@@ -68,7 +63,9 @@ class BaseBot:
             error_console.log(f"Error during completion: {e}")
             raise
 
-    def _render(self, messages: List[MessageParam], **kwargs) -> List[MessageParam]:
+    def _render(
+        self, messages: List[MessageParam], **kwargs: Dict[str, Any]
+    ) -> List[MessageParam]:
         """
         Renders the messages based on the templates. This method should be implemented
         by subclasses.

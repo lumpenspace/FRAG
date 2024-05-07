@@ -6,7 +6,7 @@ To personalise the template, extract (`frag template extract`) and modify them f
 - .frag/templates/user.j2
 """
 
-from typing import List, Literal
+from typing import List
 
 import jinja2
 from litellm import completion, ModelResponse
@@ -47,13 +47,15 @@ class InterfaceBot(BaseBot):
             )
             return result
         except jinja2.TemplateError as te:
-            error_console("Template rendering error: %s", te)
+            error_console.log("Template rendering error: %s", te)
             raise
         except Exception as e:
-            error_console("General error during completion: %s", e)
+            error_console.log("General error during completion: %s", e)
             raise
 
-    def _render(self, messages: List[MessageParam], **kwargs) -> List[MessageParam]:
+    def _render(
+        self, messages: List[MessageParam], **kwargs: MessageParam
+    ) -> List[MessageParam]:
         try:
             last_message = messages[-1]
             return [
@@ -64,10 +66,10 @@ class InterfaceBot(BaseBot):
                 ),
             ]
         except IndexError as ie:
-            error_console(
+            error_console.log(
                 "Rendering error - possibly due to empty messages list: %s", ie
             )
             raise
         except Exception as e:
-            error_console("General rendering error: %s", e)
+            error_console.log("General rendering error: %s", e)
             raise

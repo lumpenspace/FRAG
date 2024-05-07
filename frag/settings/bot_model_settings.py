@@ -3,8 +3,7 @@ LLM settings, used for both the interface and summarizer bots.
 """
 
 from typing import Any, Dict
-
-from litellm.utils import get_model_info, get_supported_openai_params
+from litellm import get_model_info, get_supported_openai_params
 from pydantic import model_validator
 from pydantic_settings import BaseSettings
 

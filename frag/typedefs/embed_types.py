@@ -10,14 +10,13 @@ It includes the following models:
 
 import dataclasses
 from datetime import date, datetime
-from typing import Dict, Optional, Union, Literal, List, Any
+from typing import Dict, Optional, Union, Literal, List
 from llama_index.core.schema import TransformComponent
 from llama_index.core.embeddings import BaseEmbedding
 from llama_index.core.retrievers import BaseRetriever
 from llama_index_client import BasePydanticReader
 
 from pydantic import BaseModel, Field, field_validator, ConfigDict
-from pydantic.dataclasses import dataclass
 
 ApiSource = Literal["OpenAI", "HuggingFace"]
 

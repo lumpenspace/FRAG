@@ -6,8 +6,8 @@ the latest messages.
 
 from typing import List, Dict, Any
 from llama_index.core.schema import Document
+from frag.settings.bot_model_settings import BotModelSettings
 from frag.typedefs import MessageParam, DocMeta
-from frag.settings import BotsSettings
 from .base_bot import BaseBot
 
 
@@ -20,7 +20,7 @@ class SummarizerBot(BaseBot):
 
     client_type = "summarizer"
 
-    def __init__(self, settings: BotsSettings, template_dir: str):
+    def __init__(self, settings: BotModelSettings, template_dir: str) -> None:
         super().__init__(settings, template_dir=template_dir)
 
     def _render(

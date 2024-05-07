@@ -19,3 +19,18 @@ from .bot_comms_types import (
     SystemMessage,
     UserMessage,
 )
+
+__all__: list[str] = [
+    "DocMeta",
+    "RecordMeta",
+    "ApiSource",
+    "PipelineAddons",
+    "AssistantMessage",
+    "CompletionParams",
+    "Message",
+    "MessageParam",
+    "Note",
+    "Role",
+    "SystemMessage",
+    "UserMessage",
+]

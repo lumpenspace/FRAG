@@ -2,17 +2,16 @@
 This module allows for embedding with HuggingFace models.
 """
 
-from typing import List, Self
+from typing import List
 from pydantic import Field
 from chromadb.api.types import EmbeddingFunction, Documents
 from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
 from sentence_transformers import SentenceTransformer
-from frag.utils.console import error_console
 
-from .embed_api import EmbedAPI  # noqa
+from llama_index.core.embeddings import BaseEmbedding
 
 
-class HFEmbedAPI(EmbedAPI):
+class HFEmbedAPI(BaseEmbedding):
     """
     A class to interact with HuggingFace's embedding models.
 

@@ -11,12 +11,6 @@ from frag.utils.console import console
 from .utils import create_or_override, section
 
 
-@click.command()
-@click.argument(
-    "path",
-    default=os.getcwd(),
-    type=click.Path(exists=True, file_okay=False, dir_okay=True),
-)
 def init(path: str) -> SettingsDict | None:
     """
     Initialize a new frag project
@@ -65,3 +59,13 @@ def init(path: str) -> SettingsDict | None:
         if dest_file.exists():
             dest_file.unlink()
         shutil.copy(src_file, dest_file)
+
+
+@click.command("init")
+@click.argument(
+    "path",
+    default=os.getcwd(),
+    type=click.Path(exists=True, file_okay=False, dir_okay=True),
+)
+def main(path: str) -> None:
+    init(path=path)

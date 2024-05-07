@@ -1,17 +1,14 @@
-from typing import List, TypedDict
+from typing import List, TypedDict, Self
 
-from llama_index.core import Document, StorageContext, VectorStoreIndex
+from llama_index.core import StorageContext, VectorStoreIndex
 from llama_index.core.ingestion import IngestionCache, IngestionPipeline
 from llama_index.core.extractors import BaseExtractor
-from llama_index.core.node_parser import NodeParser, SentenceSplitter
+from llama_index.core.node_parser import NodeParser
 from llama_index.core.schema import TransformComponent
 from llama_index.core.storage.docstore import SimpleDocumentStore
 from llama_index.core.retrievers import BaseRetriever
+from llama_index.core.node_parser import SentenceSplitter
 from llama_index.vector_stores.chroma import ChromaVectorStore
-from openai import BaseModel
-from frag import settings
-
-from frag.utils.console import error_console
 from frag.settings import EmbedSettings
 from frag.utils import SingletonMixin
 from frag.typedefs.embed_types import BaseEmbedding
@@ -22,21 +19,25 @@ ArgType = TypedDict(
 )
 
 
-class EmbeddingStore(SingletonMixin[ArgType]):
+class EmbeddingStore(SingletonMixin[type(ArgType)]):
     embed_model: BaseEmbedding
     db: ChromaVectorStore
     text_splitter: NodeParser
     docstore: SimpleDocumentStore
 
-    def __init__(self, settings: EmbedSettings) -> None:
-        self.embed_model = settings.api
-        self.db = ChromaVectorStore(
+    @classmethod
+    def create(cls, settings: EmbedSettings) -> Self:
+        instance: Self = cls.__new__(cls, settings=settings)
+        instance.embed_model = settings.api
+        instance.db = ChromaVectorStore(
             persist_directory=settings.db_path,
             collection_name=settings.default_collection,
         )
-        self.text_splitter = SentenceSplitter(
+        instance.text_splitter = SentenceSplitter(
             chunk_overlap=20,
         )
+        instance.docstore = SimpleDocumentStore()
+        return instance
 
     def change_collection(self, collection_name: str) -> None:
         """

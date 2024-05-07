@@ -35,7 +35,7 @@ SettingsDict = TypedDict(
 )
 
 
-class Settings(SingletonMixin, BaseSettings):
+class Settings(BaseSettings, SingletonMixin[type(SettingsDict)]):
     """
     Read settings from a .frag file or load them programmatically, and validate them.
 
@@ -52,7 +52,7 @@ class Settings(SingletonMixin, BaseSettings):
         """
         Set the directory in which the fragrc file is located.
         """
-        cls._frag_dir = Path(frag_dir)
+        cls._frag_dir = Path(Path.cwd(), frag_dir)
 
     @classmethod
     @property
@@ -83,10 +83,12 @@ class Settings(SingletonMixin, BaseSettings):
             console.log(f"Saved config lock to: {self.pickle_path()}")
 
     @classmethod
-    def load_lock(cls) -> None:
+    def load_lock(cls) -> Self | None:
         """
         Load the current settings from a lock file.
         """
+        if cls._instance:
+            return cls._instance
         if cls.pickle_path().exists():
             console.log(f"Config lock found in: {cls.pickle_path()}")
             try:
@@ -98,16 +100,20 @@ class Settings(SingletonMixin, BaseSettings):
         return None
 
     @classmethod
-    def from_path(cls, frag_dir: str) -> Self:
+    def reset_lock(cls) -> None:
+        cls.pickle_path().unlink(missing_ok=True)
+
+    @classmethod
+    def from_path(cls, frag_dir: str = ".frag/") -> Self:
         """
         Load settings from a dictionary and merge them with the default settings.
         """
         cls.set_dir(frag_dir)
-        if hasattr(cls, "instance"):
-            console.log("Returning the existing instance of the Settings class.")
-            if cls._instance is None:
-                raise ValueError("The instance of the Settings class is None.")
-            return cls._instance
+
+        if c := cls._instance:
+            return c
+
+        console.log(f"Loading settings from: {cls.frag_dir}")
 
         lock: None | Settings = cls.load_lock()
         if lock is not None:
@@ -123,7 +129,7 @@ class Settings(SingletonMixin, BaseSettings):
             settings = yaml.safe_load(Path(cls.frag_dir, "config.yaml").read_text())
         else:
             console.log(
-                f"No config found in: {Path(cls.frag_dir, 'config')}, using defaults"
+                f"No config found in: {Path(cls.frag_dir, 'config.yaml')}, using defaults"
             )
         try:
             with live(console=console):
@@ -139,6 +145,7 @@ class Settings(SingletonMixin, BaseSettings):
 
         embeds: EmbedSettings | None = None
         bots: BotsSettings | None = None
+
         console.log("[b]Validating:[/b]")
         try:
             bots = BotsSettings.from_dict(settings.get("bots", {}))

@@ -2,6 +2,7 @@
 fRAG: Main class for the fRAG library
 """
 
+from pathlib import Path
 from frag.embeddings.store import EmbeddingStore
 from frag.settings import Settings
 from frag.settings.settings import SettingsDict
@@ -12,20 +13,14 @@ class Frag:
     Main class for the fRAG library
     """
 
-    def __init__(self, settings: Settings | SettingsDict | None = None) -> None:
-        if settings is None:
-            settings = Settings.from_default()
+    def __init__(self, settings: Settings | SettingsDict | str) -> None:
+        if isinstance(settings, str):
+            if settings.startswith("~"):
+                settings = settings.replace("~", str(Path.home()))
+            settings = Settings.from_path(settings)
         if isinstance(settings, SettingsDict):
             settings = Settings.from_dict(settings)
-
-        self.settings = settings
-        self.embedding_store = self._create_embedding_store()
-
-    def _create_embedding_store(self) -> EmbeddingStore:
-
-        return EmbeddingStore(
-            db_path=self.settings.db.db_path,
-            collection_name=self.settings.db.default_collection,
-            embed_settings=self.settings.embed,
-            chunker_settings=self.settings.chunker,
+        self.settings: Settings = settings
+        self.embedding_store: EmbeddingStore = EmbeddingStore.create(
+            settings=self.settings.embeds,
         )

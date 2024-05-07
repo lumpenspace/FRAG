@@ -4,7 +4,7 @@ Utilities for the CLI
 
 import os
 from enum import Enum
-from typing import Literal, Self
+from typing import Self
 from rich.prompt import Prompt
 from rich.panel import Panel
 from frag.utils.console import console
@@ -15,22 +15,20 @@ class C(Enum):
     Colors for the CLI
     """
 
-    PINK = 225
-    TURQUOISE = 39
-    GREEN = 10
-    RED = 9
-    YELLOW = 11
-    BLUE = 12
-    WHITE = 15
-    DULL = 15
-    ERROR = 9
-    SUCCESS = 10
+    PINK = "pink"
+    TURQUOISE = "turquoise"
+    GREEN = "green"
+    RED = "red"
+    YELLOW = "yellow"
+    BLUE = "blue"
+    WHITE = "white"
+    DULL = "dull"
+    ERROR = "red"
+    WARNING = "black on dark_orange"
+    SUCCESS = "green"
 
     def __repr__(self) -> str:
         return str(self.value)
-
-    def __int__(self) -> Literal[225, 39, 10, 9, 11, 12, 15]:
-        return self.value
 
 
 def create_or_override(path: str, name: str, dir: bool = False) -> str | None:
@@ -47,10 +45,7 @@ def create_or_override(path: str, name: str, dir: bool = False) -> str | None:
 
         if overwrite != "y":
             console.log(
-                f"[bold {C.ERROR.value}]Initialization cancelled. .fragrc already exists.[/]"
-            )
-            console.log(
-                f"[bold {C.ERROR.value}]Initialization cancelled. .fragrc already exists.[/]"
+                f"[bold {C.ERROR.value}]Initialization cancelled. {name} already exists.[/]"
             )
             return
 

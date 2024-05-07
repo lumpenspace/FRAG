@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings
 from frag.embeddings.get_embed_api import get_embed_api
 from llama_index.core.embeddings import BaseEmbedding
 from frag.typedefs.embed_types import ApiSource
-from frag.utils.console import console
+from frag.utils import console
 
 EmbedApiSettingsDict = TypedDict(
     "EmbedApiSettingsDict",
