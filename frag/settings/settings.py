@@ -30,6 +30,7 @@ SettingsDict = TypedDict(
     {
         "embeds": None | EmbedSettingsDict,
         "bots": None | Dict[str, Any],
+        "path": None | Path,
     },
 )
 
@@ -43,20 +44,22 @@ class Settings(BaseSettings, SingletonMixin[type(SettingsDict)]):
 
     embeds: EmbedSettings
     bots: BotsSettings
+    path: Path
     __pickled__: bool = False
 
     _frag_dir: Path | None = None
 
     @classmethod
-    def create(cls, embeds: EmbedSettings, bots: BotsSettings) -> Self:
-        return cls(embeds=embeds, bots=bots)
+    def create(cls, embeds: EmbedSettings, bots: BotsSettings, path: Path) -> Self:
+        return cls(embeds=embeds, bots=bots, path=path)
 
     @classmethod
-    def set_dir(cls, frag_dir: str) -> None:
+    def set_dir(cls, frag_dir: str) -> Path:
         """
         Set the directory in which the fragrc file is located.
         """
         cls._frag_dir = Path(Path.cwd(), frag_dir)
+        return cls._frag_dir
 
     @classmethod
     @property
@@ -79,7 +82,7 @@ class Settings(BaseSettings, SingletonMixin[type(SettingsDict)]):
         """
         Load settings from a dictionary and merge them with the default settings.
         """
-        cls.set_dir(frag_dir)
+        path: Path = cls.set_dir(frag_dir)
 
         if skip_checks:
             cls.reset()
@@ -87,20 +90,20 @@ class Settings(BaseSettings, SingletonMixin[type(SettingsDict)]):
             if c := Settings.instance:
                 return c
 
-            console.log(f"Loading settings from: {cls.frag_dir}")
+            console.log(f"Loading settings from: {path}")
 
         settings: SettingsDict = {
             "embeds": None,
             "bots": None,
+            "path": path,
         }
 
-        if Path(cls.frag_dir, "config.yaml").exists():
-            console.log(f"Config found in: {Path(cls.frag_dir, 'config.yaml')}")
-            settings = yaml.safe_load(Path(cls.frag_dir, "config.yaml").read_text())
+        if Path(path, "config.yaml").exists():
+            console.log(f"Config found in: {path / 'config.yaml'}")
+            settings = yaml.safe_load(Path(path, "config.yaml").read_text())
+            settings["path"] = path
         else:
-            console.log(
-                f"No config found in: {Path(cls.frag_dir, 'config.yaml')}, using defaults"
-            )
+            console.log(f"No config found in: {path / 'config.yaml'}, using defaults")
         try:
             with live(console=console):
                 result: Self = cls.from_dict(settings)
@@ -128,12 +131,17 @@ class Settings(BaseSettings, SingletonMixin[type(SettingsDict)]):
 
         try:
             embeds = EmbedSettings.from_dict(
-                settings.get("embeds", default_settings.get("embeds", {}))
+                {
+                    **settings.get("embeds", default_settings.get("embeds", {})),
+                    **{"path": settings.get("path")},
+                }
             )
             from frag.embeddings.store import EmbeddingStore
 
             if EmbeddingStore.instance is None:
-                store: EmbeddingStore = EmbeddingStore.create(embeds)
+                store: EmbeddingStore = EmbeddingStore.create(
+                    embeds, collection_name=embeds.default_collection
+                )
                 console.log(f"Embedding store created: {store}")
         except ValueError as e:
             error: str = (
@@ -145,8 +153,9 @@ class Settings(BaseSettings, SingletonMixin[type(SettingsDict)]):
         if embeds is None:
             raise ValueError("Embed API settings are required")
         try:
-            if Settings.instance is None:
-                Settings.create(embeds=embeds, bots=bots)
+            path: Path | None = settings.get("path")
+            if Settings.instance is None and path is not None:
+                Settings.create(embeds=embeds, bots=bots, path=path)
         except Exception as e:
             Settings.reset()
             raise e

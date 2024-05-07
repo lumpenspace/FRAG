@@ -1,7 +1,8 @@
+from pathlib import Path
 from typing import Self, Dict, Any
 from typing_extensions import TypedDict
 from pydantic_settings import BaseSettings
-from pydantic import field_validator
+from pydantic import field_validator, ValidationInfo
 import logging
 
 from frag.embeddings.get_embed_api import get_embed_api
@@ -15,8 +16,7 @@ EmbedSettingsDict = TypedDict(
         "api_name": str,
         "api_source": ApiSource,
         "chunk_overlap": int,
-        "db_path": str,
-        "docstore_path": str,
+        "path": Path,
         "default_collection": str,
     },
 )
@@ -25,9 +25,8 @@ EmbedSettingsDict = TypedDict(
 class EmbedSettings(BaseSettings):
     api_source: ApiSource = "OpenAI"
     api_model: str = "text-embedding-3-large"
-    docstore_path: str = "./docstore"
     chunk_overlap: int = 0
-    db_path: str = "./db"
+    path: Path = Path("./db")
     default_collection: str = "default"
 
     @field_validator("default_collection")
@@ -65,6 +64,7 @@ class EmbedSettings(BaseSettings):
             api_source=api_source,
             chunk_overlap=embeds_dict.get("chunk_overlap", 0),
             default_collection=embeds_dict.get("default_collection", "default"),
+            path=Path(embeds_dict.get("path", "./db")),
         )
         try:
             instance.api

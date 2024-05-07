@@ -12,6 +12,7 @@ from llama_index.vector_stores.chroma import ChromaVectorStore
 from chromadb.api import ClientAPI
 from chromadb.api.models.Collection import Collection
 from chromadb import PersistentClient
+from trio import Path
 from frag.settings.embed_settings import EmbedSettings
 from frag.utils import SingletonMixin
 from frag.typedefs.embed_types import BaseEmbedding
@@ -42,12 +43,14 @@ class EmbeddingStore(SingletonMixin[type(ArgType)]):
     vector_store: ChromaVectorStore
 
     def __init__(
-        self, settings: EmbedSettings, collection_name: str | None = None
+        self,
+        settings: EmbedSettings,
+        collection_name: str | None = None,
     ) -> None:
         self.settings = settings
         self.collection_name = collection_name or self.settings.default_collection
         self.db = PersistentClient(
-            path=settings.db_path,
+            path=str(settings.path / "db"),
         )
         self.embed_model = settings.api
         self.change_collection(collection_name=collection_name)

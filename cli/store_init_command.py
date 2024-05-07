@@ -11,7 +11,9 @@ def init_store(items: Tuple[str]) -> None:
     settings: Settings = Settings.from_path()
     console.log(f"Settings: {settings.model_dump()}")
     # Initialize the embedding store
-    store = EmbeddingStore(settings=settings.embeds)
+    store: EmbeddingStore = EmbeddingStore.instance or EmbeddingStore.create(
+        settings.embeds
+    )
 
     urls: List[str] = []
     paths: List[str] = []
