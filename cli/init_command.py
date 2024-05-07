@@ -2,7 +2,7 @@ import os
 import click
 
 import jinja2
-
+import shutil
 from pathlib import Path
 
 from frag.settings import Settings, SettingsDict
@@ -45,7 +45,12 @@ def init(path: str) -> SettingsDict | None:
     console.log(f"created config file: {Path(dir_path, 'config.yaml')}")
 
     db_path: str | None = create_or_override(path=dir_path, name="db", dir=True)
-    if db_path is None:
-        return
-    else:
+    if db_path is not None:
         console.log(f"created db path: {db_path}")
+
+    console.log("[b]copying default templates[/b]")
+    # copy templates from ../frag/templates to dir_path/templates
+    shutil.copytree(
+        Path(Path(__file__).parent.parent.absolute(), "templates"),
+        Path(dir_path, "templates"),
+    )
