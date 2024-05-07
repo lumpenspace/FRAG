@@ -44,8 +44,13 @@ class Settings(BaseSettings, SingletonMixin[type(SettingsDict)]):
 
     embeds: EmbedSettings
     bots: BotsSettings
+    __pickled__: bool = False
 
     _frag_dir: Path | None = None
+
+    @classmethod
+    def create(cls, embeds: EmbedSettings, bots: BotsSettings) -> Self:
+        return cls(embeds=embeds, bots=bots)
 
     @classmethod
     def set_dir(cls, frag_dir: str) -> None:
@@ -71,53 +76,19 @@ class Settings(BaseSettings, SingletonMixin[type(SettingsDict)]):
         return cls._frag_dir
 
     @classmethod
-    def pickle_path(cls) -> Path:
-        return Path(cls.frag_dir, "config.lock")
-
-    def save_lock(self) -> None:
-        """
-        Save the current settings to a lock file.
-        """
-        with open(self.pickle_path(), "wb") as f:
-            pickle.dump(self, f)
-            console.log(f"Saved config lock to: {self.pickle_path()}")
-
-    @classmethod
-    def load_lock(cls) -> Self | None:
-        """
-        Load the current settings from a lock file.
-        """
-        if cls._instance:
-            return cls._instance
-        if cls.pickle_path().exists():
-            console.log(f"Config lock found in: {cls.pickle_path()}")
-            try:
-                return pickle.load(cls.pickle_path().open("rb"))
-            except ValueError as e:
-                error_console.log(
-                    f"Error loading config lock: {e}\n\n Trying to load from .yaml"
-                )
-        return None
-
-    @classmethod
-    def reset_lock(cls) -> None:
-        cls.pickle_path().unlink(missing_ok=True)
-
-    @classmethod
-    def from_path(cls, frag_dir: str = ".frag/") -> Self:
+    def from_path(cls, frag_dir: str = ".frag/", skip_checks: bool = False) -> Self:
         """
         Load settings from a dictionary and merge them with the default settings.
         """
         cls.set_dir(frag_dir)
 
-        if c := cls._instance:
-            return c
+        if skip_checks:
+            cls.reset()
+        else:
+            if c := Settings.instance:
+                return c
 
-        console.log(f"Loading settings from: {cls.frag_dir}")
-
-        lock: None | Settings = cls.load_lock()
-        if lock is not None:
-            return lock
+            console.log(f"Loading settings from: {cls.frag_dir}")
 
         settings: SettingsDict = {
             "embeds": None,
@@ -160,20 +131,31 @@ class Settings(BaseSettings, SingletonMixin[type(SettingsDict)]):
             embeds = EmbedSettings.from_dict(
                 settings.get("embeds", default_settings.get("embeds", {}))
             )
+            from frag.embeddings.store import EmbeddingStore
+
+            if EmbeddingStore.instance is None:
+                store: EmbeddingStore = EmbeddingStore.create(embeds)
+                console.log(f"Embedding store created: {store}")
         except ValueError as e:
             error: str = (
                 f"Error getting embed_api settings for:\n\
                     {json.dumps(settings.get('embeds', {}))}"
             )
             error_console.log(f"Error: {error}\n\n {e}\n")
+        print(Settings.instance, "instance")
         if embeds is None:
             raise ValueError("Embed API settings are required")
+        try:
+            if Settings.instance is None:
+                Settings.create(embeds=embeds, bots=bots)
+        except Exception as e:
+            Settings.reset()
+            raise e
 
-        instance: Settings = cls(embeds=embeds, bots=bots)
-        cls._instance = instance
         console.log("[b][green]Success![/green][/b]")
-        instance.save_lock()
-        return instance
+        if Settings.instance is None:
+            raise ValueError("Settings are not initialized")
+        return Settings.instance
 
     @classmethod
     def defaults(cls) -> SettingsDict:

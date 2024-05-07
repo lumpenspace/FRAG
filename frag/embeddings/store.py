@@ -9,7 +9,10 @@ from llama_index.core.storage.docstore import SimpleDocumentStore
 from llama_index.core.retrievers import BaseRetriever
 from llama_index.core.node_parser import SentenceSplitter
 from llama_index.vector_stores.chroma import ChromaVectorStore
-from frag.settings import EmbedSettings
+from chromadb.api import ClientAPI
+from chromadb.api.models.Collection import Collection
+from chromadb import PersistentClient
+from frag.settings.embed_settings import EmbedSettings
 from frag.utils import SingletonMixin
 from frag.typedefs.embed_types import BaseEmbedding
 
@@ -21,47 +24,45 @@ ArgType = TypedDict(
 
 class EmbeddingStore(SingletonMixin[type(ArgType)]):
     embed_model: BaseEmbedding
-    db: ChromaVectorStore
+    db: ClientAPI
+    collection: Collection
     text_splitter: NodeParser
     docstore: SimpleDocumentStore
+    vector_store: ChromaVectorStore
+    settings: EmbedSettings
+    index: BaseRetriever
+    collection_name: str
 
     @classmethod
-    def create(cls, settings: EmbedSettings) -> Self:
+    def create(
+        cls, settings: EmbedSettings, collection_name: str | None = None
+    ) -> Self:
+        """
+        Create a new embedding store
+        """
+        cls.reset()
         instance: Self = cls.__new__(cls, settings=settings)
+        instance.settings = settings
         instance.embed_model = settings.api
-        instance.db = ChromaVectorStore(
-            persist_directory=settings.db_path,
-            collection_name=settings.default_collection,
+        instance.db = PersistentClient(
+            path=settings.db_path,
         )
+        instance.change_collection(collection_name=collection_name)
         instance.text_splitter = SentenceSplitter(
             chunk_overlap=20,
         )
         instance.docstore = SimpleDocumentStore()
         return instance
 
-    def change_collection(self, collection_name: str) -> None:
-        """
-        Change the collection name
-        """
-        self.db = ChromaVectorStore(
-            persist_directory=self.db.persist_dir,
-            collection_name=collection_name,
-        )
-
-    @property
-    def collection_name(self) -> str:
-        """
-        Get the collection name
-        """
-        return f"{self.db.collection_name}"
-
-    @property
-    def index(self) -> BaseRetriever:
+    def get_index(self) -> BaseRetriever:
         """
         Get the index
         """
+        vector_store: ChromaVectorStore = ChromaVectorStore(
+            chroma_collection=self.collection
+        )
         storage_context: StorageContext = StorageContext.from_defaults(
-            vector_store=self.db
+            vector_store=vector_store
         )
         index: VectorStoreIndex = VectorStoreIndex.from_documents(
             documents=[],
@@ -69,6 +70,14 @@ class EmbeddingStore(SingletonMixin[type(ArgType)]):
             embed_model=self.embed_model,
         )
         return index.as_retriever()
+
+    def change_collection(self, collection_name: str | None = None) -> None:
+        """
+        Change the collection name
+        """
+        self.collection_name = collection_name or self.settings.default_collection
+        self.collection = self.db.get_or_create_collection(name=self.collection_name)
+        self.index = self.get_index()
 
     def get_pipeline(
         self,
@@ -86,8 +95,8 @@ class EmbeddingStore(SingletonMixin[type(ArgType)]):
                 *extractors,
             ],
             cache=IngestionCache(
-                collection=f"{self.db.collection_name}-{self.embed_model.model_name}"
+                collection=f"{self.collection_name}-{self.embed_model.model_name}"
             ),
-            vector_store=self.db,
+            vector_store=self.vector_store,
             docstore=self.docstore,
         )

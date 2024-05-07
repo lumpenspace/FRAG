@@ -58,7 +58,7 @@ def test_settings(
             return settings
 
 
-@click.command("test-settings")
+@click.command("test:settings")
 @click.argument(
     "path",
     default=Path(os.getcwd(), ".frag"),
