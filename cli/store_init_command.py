@@ -29,6 +29,12 @@ def init_store(items: Tuple[str]) -> None:
     console.log(f"Paths: {paths}")
     console.log(f"Embedding store: {store}")
 
+    if len(urls) > 0:
+        from frag.embeddings.ingest.ingest_url import URLIngestor
+
+        ingestor = URLIngestor(store=store)
+        ingestor.ingest(urls)
+
     # Further processing can be added here to handle URLs and paths with the store
 
 

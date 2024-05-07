@@ -9,7 +9,6 @@ frag init
 """
 
 import os
-import pickle
 from typing import Dict, Any, Self
 from typing_extensions import TypedDict
 from pathlib import Path

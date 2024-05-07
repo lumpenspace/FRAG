@@ -1,10 +1,11 @@
-from typing import Callable, List
+from typing import Callable, List, Dict, Any
+from frag.embeddings.store import EmbeddingStore, AddOns
 from llama_index.core.schema import Document
 from llama_index.readers.web import (
     BeautifulSoupWebReader,
 )
 from llama_index.core.ingestion import IngestionPipeline
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, Field, ConfigDict
 
 
 class URLIngestor(BaseModel):
@@ -12,13 +13,18 @@ class URLIngestor(BaseModel):
     Ingest a URL into the embedding store.
     """
 
-    pipeline: Callable[[List[IngestionPipeline]], IngestionPipeline]
-    _documents: List[Document]
+    store: EmbeddingStore | None = Field(default=None)
 
-    @field_validator("pipeline")
-    @classmethod
-    def validate_pipeline(cls, v: IngestionPipeline) -> IngestionPipeline:
-        return v
+    model_config: ConfigDict = ConfigDict(
+        arbitrary_types_allowed=True,
+    )
+
+    @property
+    def pipeline_addons(self) -> AddOns:
+        return {
+            "extractors": [],
+            "preprocessors": [],
+        }
 
     def ingest(self, data: List[str] | str) -> None:
         """
@@ -26,6 +32,6 @@ class URLIngestor(BaseModel):
         """
         if isinstance(data, str):
             data = [data]
-        self.pipeline(self.pipeline_addons()).run(
+        self.store.get_pipeline(self.pipeline_addons).run(
             documents=BeautifulSoupWebReader().load_data(urls=data),
         )

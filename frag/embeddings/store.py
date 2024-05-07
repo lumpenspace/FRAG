@@ -21,17 +21,39 @@ ArgType = TypedDict(
     {"settings": EmbedSettings},
 )
 
+AddOns = TypedDict(
+    "AddOns",
+    {"extractors": List[BaseExtractor], "preprocessors": List[TransformComponent]},
+)
+
 
 class EmbeddingStore(SingletonMixin[type(ArgType)]):
     embed_model: BaseEmbedding
     db: ClientAPI
     collection: Collection
-    text_splitter: NodeParser
-    docstore: SimpleDocumentStore
+    text_splitter: SentenceSplitter = SentenceSplitter()
+    docstore: SimpleDocumentStore = SimpleDocumentStore()
     vector_store: ChromaVectorStore
     settings: EmbedSettings
     index: BaseRetriever
     collection_name: str
+    text_splitter: SentenceSplitter
+    docstore: SimpleDocumentStore
+    vector_store: ChromaVectorStore
+
+    def __init__(
+        self, settings: EmbedSettings, collection_name: str | None = None
+    ) -> None:
+        self.settings = settings
+        self.collection_name = collection_name or self.settings.default_collection
+        self.db = PersistentClient(
+            path=settings.db_path,
+        )
+        self.embed_model = settings.api
+        self.change_collection(collection_name=collection_name)
+        self.text_splitter = SentenceSplitter()
+        self.docstore = SimpleDocumentStore()
+        self.vector_store = ChromaVectorStore(chroma_collection=self.collection)
 
     @classmethod
     def create(
@@ -42,16 +64,6 @@ class EmbeddingStore(SingletonMixin[type(ArgType)]):
         """
         cls.reset()
         instance: Self = cls.__new__(cls, settings=settings)
-        instance.settings = settings
-        instance.embed_model = settings.api
-        instance.db = PersistentClient(
-            path=settings.db_path,
-        )
-        instance.change_collection(collection_name=collection_name)
-        instance.text_splitter = SentenceSplitter(
-            chunk_overlap=20,
-        )
-        instance.docstore = SimpleDocumentStore()
         return instance
 
     def get_index(self) -> BaseRetriever:
@@ -81,18 +93,17 @@ class EmbeddingStore(SingletonMixin[type(ArgType)]):
 
     def get_pipeline(
         self,
-        extractors: List[BaseExtractor] = [],
-        preprocessors: List[TransformComponent] = [],
+        addons: AddOns,
     ) -> IngestionPipeline:
         """
         Ingest a URL into the embedding store.
         """
         return IngestionPipeline(
             transformations=[
-                *preprocessors,
+                *addons["preprocessors"],
                 self.text_splitter,
                 self.embed_model,
-                *extractors,
+                *addons["extractors"],
             ],
             cache=IngestionCache(
                 collection=f"{self.collection_name}-{self.embed_model.model_name}"
