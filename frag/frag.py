@@ -17,9 +17,9 @@ class Frag:
 
     def __init__(self, settings: Settings | SettingsDict | None = None) -> None:
         if settings is None:
-            settings = Settings()
+            settings = Settings.from_default()
         if isinstance(settings, SettingsDict):
-            settings = Settings(**settings)
+            settings = Settings.from_dict(settings)
 
         self.settings = settings
         self.embedding_store = self._create_embedding_store()

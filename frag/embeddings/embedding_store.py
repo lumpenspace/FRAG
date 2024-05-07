@@ -3,7 +3,6 @@ from chromadb.api import ClientAPI
 from chromadb import Collection, PersistentClient
 from chromadb.api.types import QueryResult, Embeddings
 from chromadb.errors import ChromaError, InvalidCollectionException
-import logging
 from pydantic import (
     BaseModel,
     Field,
@@ -11,15 +10,13 @@ from pydantic import (
     computed_field,
     ConfigDict,
 )
-
+from frag.console import console, error_console
 from frag.embeddings.apis import EmbedAPI, get_embed_api
 from frag.embeddings.chunks import SourceChunker
 from frag.settings import DBSettings
 from frag.settings.embed_api_settings import EmbedAPISettings
 
 from typing import List, Callable
-
-logger = logging.getLogger(__name__)
 
 """
 This module defines the EmbeddingStore class, which is responsible for storing and managingi
@@ -112,14 +109,14 @@ class EmbeddingStore(BaseModel):
         try:
             delete_result = self.collection.delete(ids=[chunk_id])
             if delete_result:
-                logging.info("Successfully deleted embedding with ID: %s", chunk_id)
+                console.log("Successfully deleted embedding with ID: %s", chunk_id)
                 return True
             else:
-                logging.warning("Failed to delete embedding with ID: %s", chunk_id)
+                console.log("Failed to delete embedding with ID: %s", chunk_id)
                 return False
         except InvalidCollectionException as e:
-            logging.error("Invalid Collection: %s", e)
+            error_console.log("Invalid Collection: %s", e)
             return False
         except ChromaError as e:
-            logging.error("Chroma database error: %s", e)
+            error_console.log("Chroma database error: %s", e)
             return False

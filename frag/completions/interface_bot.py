@@ -6,14 +6,14 @@ To personalise the template, extract (`frag template extract`) and modify them f
 - .frag/templates/user.j2
 """
 
-from logging import getLogger, Logger
 from typing import List, Literal
 
 import jinja2
 from litellm import completion, ModelResponse
 
 from frag.typedefs import MessageParam, Note
-from frag.settings import LLMModelSettings
+from frag.settings import BotModelSettings
+from frag.console import error_console
 
 from .base_bot import BaseBot
 
@@ -26,12 +26,11 @@ class InterfaceBot(BaseBot):
     """
 
     client_type = "interface"
-    settings: LLMModelSettings
+    settings: BotModelSettings
     system_template: jinja2.Template
     user_template: jinja2.Template
-    logger: Logger = getLogger(__name__)
 
-    def __init__(self, settings: LLMModelSettings, template_dir: str) -> None:
+    def __init__(self, settings: BotModelSettings, template_dir: str) -> None:
         super().__init__(settings, template_dir=template_dir)
 
     def run(self, messages: List[MessageParam], notes: List[Note]) -> ModelResponse:
@@ -48,10 +47,10 @@ class InterfaceBot(BaseBot):
             )
             return result
         except jinja2.TemplateError as te:
-            self.logger.error("Template rendering error: %s", te)
+            error_console("Template rendering error: %s", te)
             raise
         except Exception as e:
-            self.logger.error("General error during completion: %s", e)
+            error_console("General error during completion: %s", e)
             raise
 
     def _render(self, messages: List[MessageParam], **kwargs) -> List[MessageParam]:
@@ -65,10 +64,10 @@ class InterfaceBot(BaseBot):
                 ),
             ]
         except IndexError as ie:
-            self.logger.error(
+            error_console(
                 "Rendering error - possibly due to empty messages list: %s", ie
             )
             raise
         except Exception as e:
-            self.logger.error("General rendering error: %s", e)
+            error_console("General rendering error: %s", e)
             raise

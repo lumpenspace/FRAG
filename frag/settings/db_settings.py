@@ -21,11 +21,11 @@ DBSettingsDict = TypedDict(
 
 class DBSettings(BaseSettings):
     path: str = "./db"
-    collection_name: str = "default"
+    default_collection: str = "default"
 
     @field_validator("path")
     @classmethod
-    def validate_db_path(cls, v: str) -> str:
+    def validate_path(cls, v: str) -> str:
         """
         Check if the database path exists and is writable. If not, create it.
         """
@@ -35,9 +35,9 @@ class DBSettings(BaseSettings):
             os.makedirs(v)
         return v
 
-    @field_validator("collection_name")
+    @field_validator("default_collection")
     @classmethod
-    def validate_collection_name(cls, v: str) -> str:
+    def validate_default_collection(cls, v: str) -> str:
         """
         Validate the collection name.
         """

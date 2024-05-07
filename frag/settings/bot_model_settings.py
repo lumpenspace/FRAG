@@ -9,10 +9,13 @@ from pydantic import model_validator
 from pydantic_settings import BaseSettings
 
 
-class LLMModelSettings(BaseSettings):
+class BotModelSettings(BaseSettings):
     """
     LLM settings, used for both the interface and summarizer bots.
     """
+
+    api: str = "gpt-3.5-turbo"
+    bot: str
 
     def dump(self) -> dict[str, Any]:
         """
@@ -24,7 +27,7 @@ class LLMModelSettings(BaseSettings):
         return self.model_dump(exclude_unset=True, exclude_none=True)[item]
 
     @property
-    def api(self) -> str:
+    def api_name(self) -> str:
         """
         Returns the API name for the model.
         """
@@ -36,10 +39,20 @@ class LLMModelSettings(BaseSettings):
         """
         Makes sure all params are supported by the model.
         """
-        other_values: Dict[str, Any] = {k: v for k, v in values.items() if k != "api"}
+        other_values: Dict[str, Any] = {
+            k: v for k, v in values.items() if k not in ["api", "bot"]
+        }
         # check if values are supported
         model_string: str = values.get("api", "gpt-3.5-turbo")
-        info: Dict[str, Any] = get_model_info(model_string)
+
+        try:
+            info: Dict[str, Any] = get_model_info(model_string)
+        except Exception:
+            raise ValueError(
+                f"Error getting model info for {model_string}.\n\
+                List of supported models:\n\
+                https://docs.litellm.ai/docs/providers\n"
+            )
         supported_params: list[str] | None = get_supported_openai_params(
             model_string, info.get("litellm_provider", None)
         )
@@ -50,4 +63,8 @@ class LLMModelSettings(BaseSettings):
                 raise ValueError(
                     f"Unsupported parameter {k} for model {values.get('model', 'gpt-3.5-turbo')}"
                 )
-        return {**other_values, "api": model_string}
+        return {
+            **other_values,
+            "api": model_string,
+            "bot": values.get("bot"),
+        }

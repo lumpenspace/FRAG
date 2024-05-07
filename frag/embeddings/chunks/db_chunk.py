@@ -1,11 +1,8 @@
 from typing import List, Self
-import logging
 from pydantic import Field
 from chromadb.api.types import Document
 from .chunk import Chunk
 from frag.typedefs import RecordMeta
-
-logger = logging.getLogger(__name__)
 
 
 class DBChunk(Chunk):

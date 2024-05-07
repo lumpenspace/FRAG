@@ -1,10 +1,10 @@
-from logging import Logger, getLogger
 from typing import List, Any
 from litellm import Choices
-from frag.settings import LLMSettings
+from frag.settings import BotsSettings
 from frag.typedefs import Message
 from .summarizer_bot import SummarizerBot
 from .interface_bot import InterfaceBot
+from frag.console import error_console
 
 
 class Prompter:
@@ -14,10 +14,9 @@ class Prompter:
     """
 
     def __init__(
-        self, settings: LLMSettings, summarizer: SummarizerBot, interface: InterfaceBot
+        self, settings: BotsSettings, summarizer: SummarizerBot, interface: InterfaceBot
     ) -> None:
-        self.logger: Logger = getLogger(__name__)
-        self.settings: LLMSettings = settings
+        self.settings: BotsSettings = settings
         self.summarizer: SummarizerBot = summarizer
         self.interface: InterfaceBot = interface
 
@@ -31,12 +30,12 @@ class Prompter:
                 return str(responses[0].get("content", ""))
             return ""
         except Exception as e:
-            self.logger.error("Error in responding: %s", e)
+            error_console.log("Error in responding: %s", e)
             raise
 
     def summarise(self, messages, **kwargs):
         try:
             return self.summarizer.run(messages, **kwargs)
         except Exception as e:
-            self.logger.error("Error in summarising: %s", e)
+            error_console.log("Error in summarising: %s", e)
             raise

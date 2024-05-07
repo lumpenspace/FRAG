@@ -7,12 +7,9 @@ returns them as a single text block.
 
 from pydantic import BaseModel, Field
 from typing import List
-import logging
 
 from frag.embeddings.chunks import Chunk, DBChunk
 from frag.embeddings.embedding_store import EmbeddingStore
-
-logger = logging.getLogger(__name__)
 
 
 class EmbeddingsReader(BaseModel):

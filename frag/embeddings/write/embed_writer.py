@@ -11,14 +11,13 @@ fetching embeddings from models, and updating or deleting embeddings in the data
 
 import logging
 
-from typing import List
+from typing import List, Any
 
 from pydantic import BaseModel, Field
 from frag.embeddings.embedding_store import EmbeddingStore
 from frag.embeddings.chunks import SourceChunker, Chunk, SourceChunk
 from frag.typedefs import RecordMeta
-
-logger = logging.getLogger(__name__)
+from frag.console import console, error_console
 
 
 class EmbedWriter(BaseModel):
@@ -63,7 +62,7 @@ class EmbedWriter(BaseModel):
 
         return chunks
 
-    def fetch_and_store_embedding(self, chunk: Chunk):
+    def fetch_and_store_embedding(self, chunk: Chunk) -> Any | None:
         """
         Stores the embedding in a Chroma database and returns it.
 
@@ -92,7 +91,7 @@ class EmbedWriter(BaseModel):
             collection_result: Embeddings = self.store.get(ids=[chunk.id])
             embedding = collection_result.get("embeddings")
             if embedding is not None:
-                logging.info("Embedding found in db")
+                console.log("Embedding found in db")
                 return embedding
 
             logging.info("getting embeddings")
@@ -105,8 +104,8 @@ class EmbedWriter(BaseModel):
             )
 
         except ConnectionError as e:
-            logger.error(f"Failed to connect to the database: {e}")
+            error_console.log(f"Failed to connect to the database: {e}")
             raise ConnectionError("Failed to connect to the database") from e
         except Exception as e:
-            logger.error(f"Unexpected error fetching or storing embedding: {e}")
+            error_console.log(f"Unexpected error fetching or storing embedding: {e}")
             raise ValueError("Unexpected error fetching or storing embedding") from e

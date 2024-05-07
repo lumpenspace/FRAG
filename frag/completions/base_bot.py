@@ -10,7 +10,8 @@ import jinja2
 from litellm.main import ModelResponse, completion
 
 from frag.typedefs import MessageParam, Role, SystemMessage, UserMessage
-from frag.settings import LLMModelSettings
+from frag.settings import BotModelSettings
+from frag.console import error_console
 
 
 class BaseBot:
@@ -18,15 +19,14 @@ class BaseBot:
     Base API client class that handles interactions with the LLM model.
     """
 
-    settings: LLMModelSettings
+    settings: BotModelSettings
     client_type: Literal["interface", "summarizer"] | None = None
     system_template: jinja2.Template
     user_template: jinja2.Template
-    logger: logging.Logger
     messages: List[MessageParam]
     responder: str
 
-    def __init__(self, settings: LLMModelSettings, template_dir: str) -> None:
+    def __init__(self, settings: BotModelSettings, template_dir: str) -> None:
         """
         Initializes the BaseApiClient with the given settings, template paths, and client type.
 
@@ -37,8 +37,7 @@ class BaseBot:
         """
         if self.client_type is None:
             raise ValueError("client_type must be provided")
-        self.logger = logging.getLogger(__name__)
-        self.settings: LLMModelSettings = settings
+        self.settings: BotModelSettings = settings
         self.load_templates(template_dir)
 
     def run(
@@ -66,7 +65,7 @@ class BaseBot:
                 )
             )
         except Exception as e:
-            self.logger.error(f"Error during completion: {e}")
+            error_console.log(f"Error during completion: {e}")
             raise
 
     def _render(self, messages: List[MessageParam], **kwargs) -> List[MessageParam]:
@@ -104,10 +103,10 @@ class BaseBot:
             ) as file:
                 self.user_template = jinja2.Template(file.read())
         except FileNotFoundError as e:
-            self.logger.error("Template file not found: %s", e)
+            error_console.log("Template file not found: %s", e)
             raise e
         except Exception as e:
-            self.logger.error("Error loading templates: %s", e)
+            error_console.log("Error loading templates: %s", e)
             raise e
 
     def _render_message(

@@ -4,12 +4,10 @@ This module allows for embedding with HuggingFace models.
 
 from typing import List, Self
 from pydantic import Field
-from logging import getLogger, Logger
 from chromadb.api.types import EmbeddingFunction, Documents
 from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
 from sentence_transformers import SentenceTransformer
-
-logger: Logger = getLogger(__name__)
+from frag.console import error_console
 
 from .embed_api import EmbedAPI  # noqa
 

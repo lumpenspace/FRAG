@@ -1,10 +1,10 @@
-from frag.settings.llm_model_settings import LLMModelSettings
-from .llm_settings import LLMSettings
+from frag.settings.bot_model_settings import BotModelSettings
+from .bots_settings import BotsSettings
 from .settings import Settings, SettingsDict
 from .chunker_settings import ChunkerSettings
 from .db_settings import DBSettings, DBSettingsDict
 from .embed_api_settings import EmbedAPISettings
-from .llm_settings import LLMSettings, LLMModelSettings
+from .bots_settings import BotsSettings, BotModelSettings
 from .settings import Settings, SettingsDict
 from .chunker_settings import ChunkerSettings
 from .db_settings import DBSettings
