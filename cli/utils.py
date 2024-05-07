@@ -7,7 +7,7 @@ from enum import Enum
 from typing import Literal, Self
 from rich.prompt import Prompt
 from rich.panel import Panel
-from frag.console import console
+from frag.utils.console import console
 
 
 class C(Enum):

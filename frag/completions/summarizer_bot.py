@@ -5,7 +5,8 @@ the latest messages.
 """
 
 from typing import List, Dict, Any
-from frag.typedefs import MessageParam, Document, DocMeta
+from llama_index.core.schema import Document
+from frag.typedefs import MessageParam, DocMeta
 from frag.settings import BotsSettings
 from .base_bot import BaseBot
 

@@ -8,15 +8,31 @@ It includes the following models:
     before and after the chunk, and extra metadata.
 """
 
+import dataclasses
 from datetime import date, datetime
-from typing import Dict, Optional, Union, Literal
+from typing import Dict, Optional, Union, Literal, List, Any
+from llama_index.core.schema import TransformComponent
 from llama_index.core.embeddings import BaseEmbedding
+from llama_index.core.retrievers import BaseRetriever
+from llama_index_client import BasePydanticReader
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
+from pydantic.dataclasses import dataclass
 
 ApiSource = Literal["OpenAI", "HuggingFace"]
 
 BaseEmbedding = BaseEmbedding
+
+
+class PipelineAddons(BaseModel):
+    reader: BasePydanticReader | None = Field(default=None)
+    retriever: BaseRetriever | None = Field(default=None)
+    preprocessors: List[TransformComponent] = Field(default_factory=list)
+    transforms: List[TransformComponent] = dataclasses.field(default_factory=list)
+
+    model_config: ConfigDict = {  # type: ignore
+        "arbitrary_types_allowed": True,
+    }
 
 
 class DocMeta(BaseModel):

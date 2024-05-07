@@ -1,9 +1,5 @@
 embeds:
-  db_path: "{{frag_dir}}/db" # directory in which to store embeddings db 
-                           # (by default, this is the directory in which
-                           # the fragrc file is located)
   default_collection: default # name of the default collection
-
   api_model: text-embedding-3-large # Name of the embedding model.
                                    # for HuggingFace,
                                    # see https://www.sbert.net/docs/pretrained_models.html
@@ -14,6 +10,8 @@ embeds:
 bots:
   api: gpt-3.5-turbo # see: https://litellm.vercel.app/docs/providers
   # we use the lite-llm default settings unless the user specifies otherwise,
-  interface: {} # these settings override top-level settings for the interface bot
-  summarizer: {} # these settings override top-level settings for the summarizer bot
+  interface: { api: gpt-4-turbo } # these settings override top-level settings for the interface bot
+  # you can also specify other bot-specific settings, e.g.
+  # summarizer: { max_tokens: 200 }
+  # extractor: { api: gpt-3.5-turbo }
 

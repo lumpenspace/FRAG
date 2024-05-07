@@ -9,6 +9,7 @@ frag init
 """
 
 import os
+import pickle
 from typing import Dict, Any, Self
 from typing_extensions import TypedDict
 from pathlib import Path
@@ -16,14 +17,14 @@ import yaml
 import json
 from pydantic_settings import BaseSettings
 
+from frag.utils.singleton import SingletonMixin
+
 from .bots_settings import BotsSettings
-from .db_settings import DBSettings, DBSettingsDict
 from .embed_settings import EmbedSettings, EmbedSettingsDict
-from frag.console import console, error_console, live
+from frag.utils.console import console, error_console, live
 
 
 EmbedSettingsDict = EmbedSettingsDict
-DBSettingsDict = DBSettingsDict
 
 SettingsDict = TypedDict(
     "SettingsDict",
@@ -34,25 +35,17 @@ SettingsDict = TypedDict(
 )
 
 
-class Settings(BaseSettings):
+class Settings(SingletonMixin, BaseSettings):
     """
     Read settings from a .frag file or load them programmatically, and validate them.
 
     those settings include:
     """
 
-    embeds: EmbedSettings | EmbedSettingsDict
+    embeds: EmbedSettings
     bots: BotsSettings
 
     _frag_dir: Path | None = None
-
-    def __new__(cls, *args: Any, **kwargs: Any) -> "Settings":
-        if not hasattr(cls, "instance"):
-            console.log("Creating a new instance of the Settings class.")
-            cls._instance: Settings | None = super().__new__(cls)
-        if cls._instance is None:
-            raise ValueError("The instance of the Settings class is None.")
-        return cls._instance
 
     @classmethod
     def set_dir(cls, frag_dir: str) -> None:
@@ -78,6 +71,33 @@ class Settings(BaseSettings):
         return cls._frag_dir
 
     @classmethod
+    def pickle_path(cls) -> Path:
+        return Path(cls.frag_dir, "config.lock")
+
+    def save_lock(self) -> None:
+        """
+        Save the current settings to a lock file.
+        """
+        with open(self.pickle_path(), "wb") as f:
+            pickle.dump(self, f)
+            console.log(f"Saved config lock to: {self.pickle_path()}")
+
+    @classmethod
+    def load_lock(cls) -> None:
+        """
+        Load the current settings from a lock file.
+        """
+        if cls.pickle_path().exists():
+            console.log(f"Config lock found in: {cls.pickle_path()}")
+            try:
+                return pickle.load(cls.pickle_path().open("rb"))
+            except ValueError as e:
+                error_console.log(
+                    f"Error loading config lock: {e}\n\n Trying to load from .yaml"
+                )
+        return None
+
+    @classmethod
     def from_path(cls, frag_dir: str) -> Self:
         """
         Load settings from a dictionary and merge them with the default settings.
@@ -89,23 +109,25 @@ class Settings(BaseSettings):
                 raise ValueError("The instance of the Settings class is None.")
             return cls._instance
 
+        lock: None | Settings = cls.load_lock()
+        if lock is not None:
+            return lock
+
+        settings: SettingsDict = {
+            "embeds": None,
+            "bots": None,
+        }
+
         if Path(cls.frag_dir, "config.yaml").exists():
             console.log(f"Config found in: {Path(cls.frag_dir, 'config.yaml')}")
-            settings: SettingsDict = yaml.safe_load(
-                Path(cls.frag_dir, "config.yaml").read_text()
-            )
+            settings = yaml.safe_load(Path(cls.frag_dir, "config.yaml").read_text())
         else:
             console.log(
                 f"No config found in: {Path(cls.frag_dir, 'config')}, using defaults"
             )
-            settings: SettingsDict = {
-                "embeds": None,
-                "bots": None,
-            }
         try:
             with live(console=console):
                 result: Self = cls.from_dict(settings)
-
             return result
         except ValueError as e:
             error_console.log(f"Error validating settings: \n {json.dumps(settings)}")
@@ -134,7 +156,7 @@ class Settings(BaseSettings):
         except ValueError as e:
             error: str = (
                 f"Error getting embed_api settings for:\n\
-                    {json.dumps(settings.get('embed', {}))}"
+                    {json.dumps(settings.get('embeds', {}))}"
             )
             error_console.log(f"Error: {error}\n\n {e}\n")
         if embeds is None:
@@ -143,21 +165,8 @@ class Settings(BaseSettings):
         instance: Settings = cls(embeds=embeds, bots=bots)
         cls._instance = instance
         console.log("[b][green]Success![/green][/b]")
+        instance.save_lock()
         return instance
-
-    @classmethod
-    def from_rc(cls, path: Path) -> "Settings":
-        """
-        Create a new instance of the class from a .fragrc file.
-        """
-        if cls._instance is not None:
-            console.log("Returning the existing instance of the Settings class.")
-            return cls._instance
-        if not path.exists():
-            raise FileNotFoundError(f"{path} does not exist.")
-        with open(path, "r", encoding="utf-8") as f:
-            rc: str = f.read()
-        return cls.from_dict(yaml.safe_load(Path(rc).read_text()))
 
     @classmethod
     def defaults(cls) -> SettingsDict:
@@ -165,12 +174,3 @@ class Settings(BaseSettings):
         Return the default settings for the class.
         """
         return yaml.safe_load(".fragrc_default")
-
-    @classmethod
-    def reset(cls) -> None:
-        """
-        Reset Settings instance, allowing for a new instance to be created
-          the next time it is accessed.
-        """
-        cls._frag_dir = None
-        cls._instance = None

@@ -24,6 +24,7 @@ rich = "^13.7.1"
 llama-index = "^0.10.34"
 llama-index-embeddings-huggingface = "^0.2.0"
 llama-index-vector-stores-chroma = "^0.1.8"
+llama-index-readers-web = "^0.1.13"
 
 [build-system]
 requires = ["poetry-core"]

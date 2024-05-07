@@ -4,7 +4,7 @@ from frag.settings import BotsSettings
 from frag.typedefs import Message
 from .summarizer_bot import SummarizerBot
 from .interface_bot import InterfaceBot
-from frag.console import error_console
+from frag.utils.console import error_console
 
 
 class Prompter:
@@ -33,7 +33,7 @@ class Prompter:
             error_console.log("Error in responding: %s", e)
             raise
 
-    def summarise(self, messages, **kwargs):
+    def summarise(self, messages: List[Message], **kwargs: Any):
         try:
             return self.summarizer.run(messages, **kwargs)
         except Exception as e:

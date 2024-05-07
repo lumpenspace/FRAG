@@ -3,7 +3,7 @@ from chromadb import Collection, GetResult, PersistentClient
 from chromadb.api import ClientAPI
 from chromadb.api.types import QueryResult, Embeddings
 from chromadb.errors import ChromaError, InvalidCollectionException
-from frag.console import console, error_console
+from frag.utils.console import console, error_console
 from frag.embeddings_old.apis import EmbedAPI
 from frag.embeddings_old.chunks import SourceChunker
 from frag.settings import DBSettings, ChunkerSettings, EmbedSettings

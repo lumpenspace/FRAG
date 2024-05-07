@@ -11,7 +11,7 @@ from litellm.main import ModelResponse, completion
 
 from frag.typedefs import MessageParam, Role, SystemMessage, UserMessage
 from frag.settings import BotModelSettings
-from frag.console import error_console
+from frag.utils.console import error_console
 
 
 class BaseBot:

@@ -6,7 +6,7 @@ import shutil
 from pathlib import Path
 
 from frag.settings import Settings, SettingsDict
-from frag.console import console
+from frag.utils.console import console
 
 from .utils import create_or_override, section
 
@@ -50,6 +50,13 @@ def init(path: str) -> SettingsDict | None:
 
     console.log("[b]copying default templates[/b]")
 
+    docstore_path: str | None = create_or_override(
+        path=dir_path, name="docstore", dir=True
+    )
+    if docstore_path is not None:
+        console.log(f"created docstore path: {docstore_path}")
+
+    console.log("[b]copying default templates[/b]")
     templates_src_path: Path = Path(__file__).parent.parent / "frag" / "templates"
     templates_dest_path: Path = Path(dir_path) / "templates"
 

@@ -13,7 +13,7 @@ from litellm import completion, ModelResponse
 
 from frag.typedefs import MessageParam, Note
 from frag.settings import BotModelSettings
-from frag.console import error_console
+from frag.utils.console import error_console
 
 from .base_bot import BaseBot
 

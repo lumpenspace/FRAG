@@ -6,11 +6,8 @@ Export common types and classes
 # pylint: disable=import-error
 # flake8: noqa
 
-from typing import Type
 
-
-from chromadb import Documents
-from .embed_types import DocMeta, RecordMeta, ApiSource
+from .embed_types import DocMeta, RecordMeta, ApiSource, PipelineAddons
 
 from .bot_comms_types import (
     AssistantMessage,
@@ -22,5 +19,3 @@ from .bot_comms_types import (
     SystemMessage,
     UserMessage,
 )
-
-Document = Type[str]

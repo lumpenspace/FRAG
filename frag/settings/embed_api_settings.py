@@ -1,49 +1,23 @@
 from typing import Self, Dict, Any
 from typing_extensions import TypedDict
 from pydantic_settings import BaseSettings
-from pydantic import field_validator, ValidationInfo
-import os
-import logging
 
 from frag.embeddings.get_embed_api import get_embed_api
 from llama_index.core.embeddings import BaseEmbedding
 from frag.typedefs.embed_types import ApiSource
-from frag.utils.console import console, error_console
+from frag.utils.console import console
 
-EmbedSettingsDict = TypedDict(
-    "EmbedSettingsDict",
-    {
-        "api_name": str,
-        "api_source": ApiSource,
-        "chunk_overlap": int,
-        "db_path": str,
-        "docstore_path": str,
-        "default_collection": str,
-    },
+EmbedApiSettingsDict = TypedDict(
+    "EmbedApiSettingsDict",
+    {"api_name": str, "api_source": ApiSource, "chunk_overlap": int | None},
 )
 
 
-class EmbedSettings(BaseSettings):
+class EmbedAPISettings(BaseSettings):
     api_source: ApiSource = "OpenAI"
     api_model: str = "text-embedding-3-large"
-    docstore_path: str = "./docstore"
-    chunk_overlap: int = 0
-    db_path: str = "./db"
-    default_collection: str = "default"
 
-    @field_validator("default_collection")
-    @classmethod
-    def validate_default_collection(cls, v: str) -> str:
-        """
-        Validate the collection name.
-        """
-        if not v:
-            v = "default_collection"
-            logging.warning(
-                "Collection name not provided, using default collection name: %s",
-                v,
-            )
-        return v
+    chunk_overlap: int = 0
 
     @property
     def api(self) -> BaseEmbedding:
@@ -61,15 +35,16 @@ class EmbedSettings(BaseSettings):
         console.log(f"[b]EmbedApiSettings:[/] {embeds_dict}")
         api_model: str = embeds_dict.get("api_model", "text-embedding-3-large")
         api_source: ApiSource = embeds_dict.get("api_source", "OpenAI")
-        instance: Self = cls(
+
+        instance = cls(
             api_model=api_model,
             api_source=api_source,
             chunk_overlap=embeds_dict.get("chunk_overlap", 0),
-            default_collection=embeds_dict.get("default_collection", "default"),
         )
+
         try:
             instance.api
         except Exception as e:
-            error_console.log("Error getting embed api", e)
+            console.log("Error getting embed api", e)
 
         return instance

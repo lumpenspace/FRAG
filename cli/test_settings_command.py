@@ -7,7 +7,7 @@ from rich.panel import Panel
 from rich.pretty import Pretty
 
 from frag.settings import Settings
-from frag.console import console
+from frag.utils.console import console
 
 
 @click.command()
